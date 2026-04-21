@@ -9,9 +9,10 @@ const ImageLog = require("../models/ImageLog");
  */
 function getISTDate() {
   const now = new Date();
-  // IST is UTC + 5:30
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  return new Date(now.getTime() + istOffset);
+  // IST is UTC + 5:30. We force the date object to represent that time in UTC
+  // so that MongoDB displays it as the "Local" value.
+  const istOffsetMinutes = 330; // 5 hours * 60 + 30
+  return new Date(now.getTime() + (istOffsetMinutes * 60000));
 }
 
 async function insertLog(entry) {

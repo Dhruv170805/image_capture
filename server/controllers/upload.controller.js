@@ -84,28 +84,32 @@ const ImageLog = require("../models/ImageLog");
 
 async function downloadAll(req, res) {
   try {
-    // 1. Create a ZIP archiver
     const archive = archiver("zip", { zlib: { level: 5 } });
-    
-    // 2. Set headers for file download
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    res.attachment(`all_images_${timestamp}.zip`);
+    res.attachment(`employee_captures_${timestamp}.zip`);
 
-    // 3. Handle potential errors
     archive.on("error", (err) => { throw err; });
     archive.pipe(res);
 
-    // 4. Fetch all images from DB using a cursor (memory efficient)
+    // Create CSV Header
+    let csvContent = "EmployeeCode,EmployeeName,Department,FileName,CapturedAt_IST\n";
+
     const cursor = ImageLog.find({}).cursor();
 
     for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
       if (doc.ImageData) {
-        // Add each image buffer to the zip with its original filename
-        archive.append(doc.ImageData, { name: doc.FileName || `image_${doc._id}.jpg` });
+        // Add image to ZIP
+        archive.append(doc.ImageData, { name: `images/${doc.FileName}` });
+        
+        // Add row to CSV Manifest
+        const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
+        csvContent += `"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${doc.FileName}","${istTime}"\n`;
       }
     }
 
-    // 5. Finalize the ZIP
+    // Add the CSV manifest to the ZIP
+    archive.append(csvContent, { name: "manifest.csv" });
+
     await archive.finalize();
 
   } catch (err) {
