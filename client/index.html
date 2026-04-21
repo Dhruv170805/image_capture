@@ -211,8 +211,8 @@
                     <span class="en">Your details have been captured successfully.</span>
                 </p>
                 <button id="new-capture-btn" class="btn" style="margin-top: 2rem;">
-                    <span class="gu">બીજું કેપ્ચર કરો</span>
-                    <span class="en">Capture Another</span>
+                    <span class="gu">બીજું કેપ્ચર કરો 😊</span>
+                    <span class="en">Capture Another 😊</span>
                 </button>
             </div>
 
@@ -350,11 +350,7 @@
                 if (result.success) {
                     stopCamera();
                     showStep('thanks');
-                    setTimeout(() => {
-                        if (steps.thanks.classList.contains('active')) {
-                            resetToStart();
-                        }
-                    }, 10000);
+                    // No automatic reset
                 } else {
                     showStatus('અપલોડ નિષ્ફળ: ' + result.message, 'Upload failed: ' + result.message, 'error');
                     elements.captureBtn.disabled = false;
