@@ -24,15 +24,24 @@ async function seed() {
     fs.createReadStream(CSV_PATH)
       .pipe(csv())
       .on("data", (row) => {
-        employees.push({
-          EmployeeCode: row.EmployeeCode.trim().toUpperCase(),
-          Name: row.Name.trim(),
-          Department: row.Department.trim(),
-          IsActive: row.IsActive.trim() === "1",
-        });
+        // Mapping based on your specific CSV headers: empcode, name, desc
+        if (row.empcode && row.name) {
+          employees.push({
+            EmployeeCode: row.empcode.trim().toUpperCase(),
+            Name: row.name.trim(),
+            Department: row.desc ? row.desc.trim() : "General",
+            IsActive: true, // Default to true since not in CSV
+          });
+        }
       })
       .on("end", async () => {
         try {
+          if (employees.length === 0) {
+            console.log("⚠️ No employees found in CSV. Check headers.");
+            mongoose.connection.close();
+            return resolve();
+          }
+
           console.log(`🧹 Cleaning existing employees...`);
           await Employee.deleteMany({});
 

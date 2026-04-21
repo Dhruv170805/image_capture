@@ -3,25 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Image Capture</title>
+    <title>Bulk Image Exporter | Admin</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f4f8; padding: 2rem; text-align: center; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        .btn { 
-            background: #003366; color: white; border: none; padding: 1rem 2rem; 
-            border-radius: 8px; font-size: 1.1rem; cursor: pointer; text-decoration: none; display: inline-block;
-            margin-top: 1rem;
-        }
+        :root { --primary: #003366; --bg: #f4f7f9; --text: #333; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 2rem; color: var(--text); }
+        .container { max-width: 900px; margin: auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        h1 { margin-top: 0; color: var(--primary); }
+        
+        .panel { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .panel h3 { margin-top: 0; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
         .btn:hover { background: #002244; }
-        .info { color: #666; font-size: 0.9rem; margin-top: 2rem; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        input[type="text"], input[type="date"] { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; margin-right: 0.5rem; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { text-align: left; padding: 0.8rem; border-bottom: 1px solid #eee; }
+        th { background: #f9f9f9; }
+        
+        .loader { width: 16px; height: 16px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: none; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .error { color: #d32f2f; margin-top: 1rem; font-weight: bold; }
+        .success { color: #2e7d32; margin-top: 1rem; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Admin Control</h1>
-        <p>Export all captured images stored in MongoDB Atlas.</p>
-        <a href="/api/upload/download-all" class="btn">📦 Download All Images (.ZIP)</a>
-        <div class="info">This will fetch all images from the database and package them into a ZIP file.</div>
+
+<div class="container">
+    <h1>📦 Bulk Image Exporter</h1>
+
+    <!-- Selection Download -->
+    <div class="panel">
+        <h3>1. Download Selected Captures</h3>
+        <button id="load-logs-btn" class="btn">Load Recent 100 Captures</button>
+        <button id="download-selected-btn" class="btn" disabled>
+            <span class="loader" id="loader-selected"></span>
+            Download Selected as ZIP
+        </button>
+
+        <table id="logs-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Employee</th>
+                    <th>Code</th>
+                    <th>Date</th>
+                    <th>Size</th>
+                </tr>
+            </thead>
+            <tbody id="logs-body"></tbody>
+        </table>
     </div>
+
+    <!-- Date Range Download -->
+    <div class="panel">
+        <h3>2. Download By Date Range</h3>
+        <input type="date" id="date-start">
+        <input type="date" id="date-end">
+        <button id="download-date-btn" class="btn">
+            <span class="loader" id="loader-date"></span>
+            Download Date Range
+        </button>
+    </div>
+
+    <!-- Employee Download -->
+    <div class="panel">
+        <h3>3. Download All For Employee</h3>
+        <input type="text" id="emp-code-input" placeholder="Enter EMP001">
+        <button id="download-emp-btn" class="btn">
+            <span class="loader" id="loader-emp"></span>
+            Download Employee
+        </button>
+    </div>
+
+    <!-- Global Download -->
+    <div class="panel">
+        <h3>4. Download Everything (Legacy)</h3>
+        <a href="/api/upload/download-all" class="btn">Download ALL Data</a>
+    </div>
+
+    <div id="status-msg"></div>
+</div>
+
+<script>
+    // Elements
+    const loadLogsBtn = document.getElementById('load-logs-btn');
+    const downloadSelectedBtn = document.getElementById('download-selected-btn');
+    const logsTable = document.getElementById('logs-table');
+    const logsBody = document.getElementById('logs-body');
+    const selectAllCb = document.getElementById('select-all');
+    const statusMsg = document.getElementById('status-msg');
+
+    let loadedLogs = [];
+
+    function setStatus(msg, type) {
+        statusMsg.textContent = msg;
+        statusMsg.className = type;
+    }
+
+    async function triggerDownload(url, method, body, loaderId, btnId, filenamePrefix) {
+        const btn = document.getElementById(btnId);
+        const loader = document.getElementById(loaderId);
+        
+        try {
+            btn.disabled = true;
+            loader.style.display = 'inline-block';
+            setStatus('Generating ZIP stream... Please wait.', 'success');
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : null
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Download failed.');
+            }
+
+            // Extract filename from headers if possible
+            const disposition = res.headers.get('Content-Disposition');
+            let filename = filenamePrefix + '.zip';
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                if (matches != null && matches[1]) { 
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+
+            // Read the binary stream directly to an Object URL
+            const blob = await res.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            
+            // Trigger auto download
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = downloadUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(downloadUrl);
+            document.body.removeChild(a);
+
+            setStatus('Download Complete!', 'success');
+        } catch (err) {
+            setStatus('Error: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    }
+
+    // Load recent captures
+    loadLogsBtn.addEventListener('click', async () => {
+        try {
+            setStatus('Loading logs...', '');
+            const res = await fetch('/api/upload/logs?limit=100');
+            const result = await res.json();
+            
+            if (result.success) {
+                loadedLogs = result.data;
+                renderTable();
+                setStatus(`Loaded ${loadedLogs.length} recent captures.`, 'success');
+            } else {
+                setStatus('Failed to load logs.', 'error');
+            }
+        } catch (err) {
+            setStatus('Network error loading logs.', 'error');
+        }
+    });
+
+    function renderTable() {
+        logsBody.innerHTML = '';
+        loadedLogs.forEach(log => {
+            const tr = document.createElement('tr');
+            
+            const tdCb = document.createElement('td');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'log-checkbox';
+            cb.value = log._id;
+            cb.onchange = checkSelection;
+            tdCb.appendChild(cb);
+
+            const tdName = document.createElement('td'); tdName.textContent = log.EmployeeName;
+            const tdCode = document.createElement('td'); tdCode.textContent = log.EmployeeCode;
+            const tdDate = document.createElement('td'); tdDate.textContent = new Date(log.CapturedAt).toLocaleString();
+            const tdSize = document.createElement('td'); tdSize.textContent = (log.FileSizeBytes / 1024).toFixed(1) + ' KB';
+
+            tr.append(tdCb, tdName, tdCode, tdDate, tdSize);
+            logsBody.appendChild(tr);
+        });
+        logsTable.style.display = 'table';
+    }
+
+    selectAllCb.addEventListener('change', (e) => {
+        const cbs = document.querySelectorAll('.log-checkbox');
+        cbs.forEach(cb => cb.checked = e.target.checked);
+        checkSelection();
+    });
+
+    function checkSelection() {
+        const cbs = document.querySelectorAll('.log-checkbox:checked');
+        downloadSelectedBtn.disabled = cbs.length === 0;
+    }
+
+    // Download Selected
+    downloadSelectedBtn.addEventListener('click', () => {
+        const selectedIds = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value);
+        if (selectedIds.length === 0) return;
+        triggerDownload('/api/download/zip', 'POST', { ids: selectedIds }, 'loader-selected', 'download-selected-btn', 'selection');
+    });
+
+    // Download Date Range
+    document.getElementById('download-date-btn').addEventListener('click', () => {
+        const startDate = document.getElementById('date-start').value;
+        const endDate = document.getElementById('date-end').value;
+        if (!startDate || !endDate) return setStatus('Select both start and end dates.', 'error');
+        triggerDownload('/api/download/date', 'POST', { startDate, endDate }, 'loader-date', 'download-date-btn', 'date_range');
+    });
+
+    // Download By Employee
+    document.getElementById('download-emp-btn').addEventListener('click', () => {
+        const code = document.getElementById('emp-code-input').value.trim();
+        if (!code) return setStatus('Enter an employee code.', 'error');
+        triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee');
+    });
+
+</script>
 </body>
 </html>

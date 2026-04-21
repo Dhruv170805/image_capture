@@ -318,11 +318,6 @@
                 const result = await res.json();
                 if (result.success) {
                     stopCamera();
-                    
-                    // Set the download link
-                    const photoLink = document.getElementById('view-photo-link');
-                    photoLink.href = `/api/upload/image/${result.data.logId}`;
-                    
                     showStep('thanks');
                     // No automatic reset
                 } else {
