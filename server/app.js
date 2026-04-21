@@ -16,6 +16,7 @@ const { connectDB } = require("./config/db");
 
 const employeeRoutes = require("./routes/employee.routes");
 const uploadRoutes = require("./routes/upload.routes");
+const downloadRoutes = require("./routes/download.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -61,6 +62,7 @@ app.use(globalLimiter);
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use("/api/employee", employeeRoutes);
 app.use("/api/upload", uploadLimiter, uploadRoutes);
+app.use("/api/download", downloadRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
