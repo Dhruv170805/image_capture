@@ -3,35 +3,50 @@
  */
 
 const mongoose = require("mongoose");
-require("dotenv").config(); // Load from root automatically
+require("dotenv").config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Global variable to cache the connection state in serverless environments
-let isConnected = false;
+// Cached connection for serverless environments
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
 async function connectDB() {
-  if (isConnected) {
-    console.log("✅ [DB] Using existing MongoDB connection");
+  if (!MONGODB_URI) {
+    console.error("❌ [DB Error] MONGODB_URI is missing in environment variables.");
     return;
   }
 
-  if (!MONGODB_URI) {
-    console.error("❌ [DB Error] MONGODB_URI is missing in environment variables.");
-    if (process.env.NODE_ENV === "production" && process.env.VERCEL !== "1") process.exit(1);
-    return;
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("✅ [DB] Connected to MongoDB Atlas");
+      return mongoose;
+    }).catch((err) => {
+      console.error("❌ [DB] Connection failed:", err.message);
+      cached.promise = null;
+      throw err;
+    });
   }
 
   try {
-    const db = await mongoose.connect(MONGODB_URI);
-    isConnected = db.connections[0].readyState === 1;
-    console.log("✅ [DB] Connected to MongoDB Atlas");
-  } catch (err) {
-    console.error("❌ [DB] Connection failed:", err.message);
-    if (process.env.NODE_ENV === "production" && process.env.VERCEL !== "1") {
-      process.exit(1);
-    }
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
   }
+
+  return cached.conn;
 }
 
 module.exports = { connectDB };

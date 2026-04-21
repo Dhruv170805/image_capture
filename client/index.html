@@ -158,7 +158,51 @@
     <div class="container">
         <div class="card">
             
-            <!-- ... (Steps 1 & 2 remain same) ... -->
+            <!-- STEP 1: VERIFY -->
+            <div id="step-verify" class="step active">
+                <h1>
+                    <span class="gu">ઈમેજ કેપ્ચર સિસ્ટમ</span>
+                    <span class="en">Image Capture System</span>
+                </h1>
+                <p class="subtitle">Please enter your Employee Code to begin.</p>
+                
+                <div class="input-group">
+                    <label>
+                        <span class="gu">એમ્પ્લોયી કોડ</span>
+                        <span class="en">Employee Code</span>
+                    </label>
+                    <input type="text" id="empCode" placeholder="Ex: EMP001" autocomplete="off">
+                </div>
+
+                <button id="verify-btn" class="btn">
+                    <span class="loader" id="verify-loader"></span>
+                    <span class="gu">આગળ વધો</span>
+                    <span class="en">Verify & Continue</span>
+                </button>
+            </div>
+
+            <!-- STEP 2: CAPTURE -->
+            <div id="step-capture" class="step">
+                <div class="emp-info">
+                    <p class="emp-name" id="display-name">---</p>
+                    <p class="emp-dept" id="display-dept">---</p>
+                </div>
+
+                <div id="camera-wrap">
+                    <video id="video" autoplay playsinline></video>
+                </div>
+
+                <button id="capture-btn" class="btn" style="background: var(--accent); margin-bottom: 1rem;">
+                    <span class="loader" id="capture-loader"></span>
+                    <span class="gu">ફોટો લો 📸</span>
+                    <span class="en">Capture Photo 📸</span>
+                </button>
+
+                <button id="reset-btn" class="btn" style="background: #666;">
+                    <span class="gu">ફરીથી પ્રયાસ કરો</span>
+                    <span class="en">Try Different Code</span>
+                </button>
+            </div>
             
             <!-- STEP 3: THANK YOU -->
             <div id="step-thanks" class="step">
