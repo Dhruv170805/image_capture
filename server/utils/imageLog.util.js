@@ -9,24 +9,44 @@ const ImageLog = require("../models/ImageLog");
  */
 function getISTDate() {
   const now = new Date();
-  // IST is UTC + 5:30. We force the date object to represent that time in UTC
-  // so that MongoDB displays it as the "Local" value.
-  const istOffsetMinutes = 330; // 5 hours * 60 + 30
+  const istOffsetMinutes = 330; 
   return new Date(now.getTime() + (istOffsetMinutes * 60000));
 }
 
 async function insertLog(entry) {
   try {
-    const newLog = new ImageLog({
+    const istNow = getISTDate();
+    const safeCode = entry.EmployeeCode.replace(/[^A-Za-z0-9]/g, "");
+
+    // 1. Update or Create the PRIMARY record (EmployeeCode.jpg)
+    // This record is always updated to reflect the LATEST photo.
+    await ImageLog.findOneAndUpdate(
+      { FileName: `${safeCode}.jpg` },
+      {
+        EmployeeCode: entry.EmployeeCode,
+        EmployeeName: entry.EmployeeName,
+        Department: entry.Department,
+        FileName: `${safeCode}.jpg`,
+        FileSizeBytes: entry.FileSizeBytes,
+        ImageData: entry.ImageData,
+        CapturedAt: istNow,
+      },
+      { upsert: true, new: true }
+    );
+
+    // 2. Insert the ARCHIVE record (EmployeeCode_Timestamp.jpg)
+    // This preserves the full history.
+    const archiveLog = new ImageLog({
       EmployeeCode: entry.EmployeeCode,
       EmployeeName: entry.EmployeeName,
       Department: entry.Department,
-      FileName: entry.FileName,
+      FileName: entry.FileName, // This is the timestamped name from controller
       FileSizeBytes: entry.FileSizeBytes,
       ImageData: entry.ImageData,
-      CapturedAt: getISTDate(), // Forced IST Timestamp
+      CapturedAt: istNow,
     });
-    return await newLog.save();
+
+    return await archiveLog.save();
   } catch (err) {
     console.error("[Log Utility Error]", err);
     throw err;
