@@ -11,7 +11,7 @@ async function getEmployee(code) {
 
   const trimmed = code.trim().toUpperCase();
 
-  if (!/^[A-Z0-9]{3,20}$/.test(trimmed)) {
+  if (!/^[A-Z0-9]{1,20}$/.test(trimmed)) {
     return { success: false, error: "INVALID_FORMAT", message: "Invalid employee code format." };
   }
 
