@@ -1,34 +1,44 @@
 {
   "version": 2,
-  "functions": {
-    "server/app.js": {
-      "runtime": "nodejs20.x"
+  "builds": [
+    {
+      "src": "server/app.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "client/**/*",
+      "use": "@vercel/static"
     }
-  },
-  "rewrites": [
+  ],
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server/app.js"
+      "src": "/api/(.*)",
+      "dest": "server/app.js"
     },
     {
-      "source": "/admin",
-      "destination": "/client/admin.html"
+      "src": "/admin",
+      "dest": "client/admin.html"
     },
     {
-      "source": "/admin.html",
-      "destination": "/client/admin.html"
+      "src": "/admin.html",
+      "dest": "client/admin.html"
     },
     {
-      "source": "/logo.png",
-      "destination": "/client/logo.png"
+      "src": "/logo.png",
+      "dest": "client/logo.png"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/client/assets/$1"
+      "src": "/assets/(.*)",
+      "dest": "client/assets/$1"
     },
     {
-      "source": "/((?!api|admin|logo.png|assets).*)",
-      "destination": "/client/index.html"
+      "src": "/(.*)",
+      "dest": "client/$1",
+      "continue": true
+    },
+    {
+      "src": "/(.*)",
+      "dest": "client/index.html"
     }
   ]
 }
