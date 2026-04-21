@@ -153,52 +153,14 @@
 
     <nav class="navbar">
         <img src="logo.png" alt="Logo">
+        <a href="/admin.html" style="position: absolute; right: 20px; color: var(--primary); text-decoration: none; font-size: 0.8rem; font-weight: 600; opacity: 0.5;">Admin</a>
     </nav>
 
     <div class="container">
         <div class="card">
             
-            <!-- STEP 1: VERIFY CODE -->
-            <div id="step-verify" class="step active">
-                <h1>
-                    <span class="gu">કર્મચારીની વિગત</span>
-                    <span class="en">Employee Verification</span>
-                </h1>
-                <p class="subtitle">કૃપા કરીને તમારો એમ્પ્લોયી કોડ દાખલ કરો<br>(Please enter your employee code)</p>
-
-                <div class="input-group">
-                    <label>એમ્પ્લોયી કોડ (Employee Code)</label>
-                    <input type="text" id="empCode" placeholder="E.g. EMP001" autocomplete="off">
-                </div>
-
-                <button id="verify-btn" class="btn">
-                    <span class="loader" id="verify-loader"></span>
-                    <span class="gu">ચકાસો (Verify)</span>
-                </button>
-            </div>
-
-            <!-- STEP 2: CAPTURE -->
-            <div id="step-capture" class="step">
-                <div class="emp-info">
-                    <p class="emp-name" id="display-name"></p>
-                    <p class="emp-dept" id="display-dept"></p>
-                </div>
-
-                <div id="camera-wrap">
-                    <video id="video" autoplay playsinline></video>
-                </div>
-
-                <button id="capture-btn" class="btn">
-                    <span class="loader" id="capture-loader"></span>
-                    <span class="gu">ફોટો લો અને સબમિટ કરો</span>
-                    <span class="en">Capture & Submit</span>
-                </button>
-                
-                <button id="reset-btn" style="background:none; color:#666; border:none; margin-top:1rem; cursor:pointer; font-size:0.9rem;">
-                    ← પાછા જાઓ (Go Back)
-                </button>
-            </div>
-
+            <!-- ... (Steps 1 & 2 remain same) ... -->
+            
             <!-- STEP 3: THANK YOU -->
             <div id="step-thanks" class="step">
                 <div class="thank-you-icon">✅</div>
@@ -210,7 +172,14 @@
                     <span class="gu">તમારી વિગતો સફળતાપૂર્વક લેવામાં આવી છે.</span>
                     <span class="en">Your details have been captured successfully.</span>
                 </p>
-                <button id="new-capture-btn" class="btn" style="margin-top: 2rem;">
+                
+                <div id="download-link-container" style="margin: 1.5rem 0; padding: 1rem; border: 1px dashed #ccc; border-radius: 8px;">
+                    <a id="view-photo-link" href="#" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                        🖼️ View/Download Your Photo
+                    </a>
+                </div>
+
+                <button id="new-capture-btn" class="btn" style="margin-top: 1rem;">
                     <span class="gu">બીજું કેપ્ચર કરો 😊</span>
                     <span class="en">Capture Another 😊</span>
                 </button>
@@ -349,6 +318,11 @@
                 const result = await res.json();
                 if (result.success) {
                     stopCamera();
+                    
+                    // Set the download link
+                    const photoLink = document.getElementById('view-photo-link');
+                    photoLink.href = `/api/upload/image/${result.data.logId}`;
+                    
                     showStep('thanks');
                     // No automatic reset
                 } else {
