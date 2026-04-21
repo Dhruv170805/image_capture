@@ -1,28 +1,34 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server/app.js",
-      "use": "@vercel/node"
+  "functions": {
+    "server/app.js": {
+      "runtime": "vercel-node@latest"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "server/app.js"
+      "source": "/api/(.*)",
+      "destination": "/server/app.js"
     },
     {
-      "src": "/admin",
-      "dest": "client/admin.html"
+      "source": "/admin",
+      "destination": "/client/admin.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "client/$1",
-      "check": true
+      "source": "/admin.html",
+      "destination": "/client/admin.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "server/app.js"
+      "source": "/logo.png",
+      "destination": "/client/logo.png"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/client/assets/$1"
+    },
+    {
+      "source": "/((?!api|admin|logo.png|assets).*)",
+      "destination": "/client/index.html"
     }
   ]
 }
