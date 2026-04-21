@@ -1,0 +1,16 @@
+EmployeeCode,Name,Department,IsActive
+EMP001,Rahul Sharma,IT,1
+EMP002,Priya Patel,HR,1
+EMP003,Amit Shah,Finance,1
+EMP004,Neha Joshi,Operations,1
+EMP005,Suresh Kumar,Security,1
+EMP006,Kavita Mehta,IT,1
+EMP007,Ravi Verma,Production,0
+EMP008,Sunita Desai,HR,1
+EMP009,Mahesh Patel,Maintenance,1
+EMP010,Anita Singh,Finance,1
+EMP011,Deepak Chauhan,Security,1
+EMP012,Geeta Sharma,Operations,1
+EMP013,Vijay Nair,Production,1
+EMP014,Rekha Yadav,Administration,1
+EMP015,Mohan Das,Maintenance,1
