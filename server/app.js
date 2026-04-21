@@ -14,9 +14,9 @@ const path = require("path");
 const mongoose = require("mongoose");
 const { connectDB } = require("./config/db");
 
-const employeeRoutes = require(path.join(__dirname, "routes/employee.routes"));
-const uploadRoutes = require(path.join(__dirname, "routes/upload.routes"));
-const downloadRoutes = require(path.join(__dirname, "routes/download.routes"));
+const employeeRoutes = require("./routes/employee.routes");
+const uploadRoutes = require("./routes/upload.routes");
+const downloadRoutes = require("./routes/download.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
