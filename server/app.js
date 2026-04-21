@@ -24,6 +24,16 @@ const PORT = process.env.PORT || 3001;
 // ─── Database ─────────────────────────────────────────────────────────────────
 connectDB();
 
+// Middleware to ensure DB is connected for API routes
+const ensureDB = async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(503).json({ success: false, message: "Database connection error." });
+  }
+};
+
 // ─── Security ─────────────────────────────────────────────────────────────────
 app.use(helmet({ 
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -60,9 +70,9 @@ const uploadLimiter = rateLimit({
 app.use(globalLimiter);
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
-app.use("/api/employee", employeeRoutes);
-app.use("/api/upload", uploadLimiter, uploadRoutes);
-app.use("/api/download", downloadRoutes);
+app.use("/api/employee", ensureDB, employeeRoutes);
+app.use("/api/upload", ensureDB, uploadLimiter, uploadRoutes);
+app.use("/api/download", ensureDB, downloadRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
