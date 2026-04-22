@@ -124,7 +124,10 @@ async function downloadByIds(req, res) {
       return res.status(400).json({ success: false, message: "No valid IDs provided." });
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const now = new Date();
+    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const pad = (n) => n.toString().padStart(2, "0");
+    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     const zipFilename = `custom_selection_${timestamp}.zip`;
 
     // Initiate streaming pipeline
@@ -144,7 +147,10 @@ async function downloadByEmployee(req, res) {
     }
 
     const safeCode = code.trim().toUpperCase();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const now = new Date();
+    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const pad = (n) => n.toString().padStart(2, "0");
+    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     const zipFilename = `employee_${safeCode}_${timestamp}.zip`;
 
     await streamImagesToZip(res, { EmployeeCode: safeCode }, zipFilename);
@@ -172,7 +178,10 @@ async function downloadByDate(req, res) {
       return res.status(400).json({ success: false, message: "Invalid date format provided." });
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 10);
+    const now = new Date();
+    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const pad = (n) => n.toString().padStart(2, "0");
+    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}`;
     const zipFilename = `export_${timestamp}.zip`;
 
     await streamImagesToZip(res, { CapturedAt: { $gte: start, $lte: end } }, zipFilename);
