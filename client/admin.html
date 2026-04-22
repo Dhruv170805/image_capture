@@ -40,7 +40,7 @@
         .left-col { display: flex; flex-direction: column; gap: 1rem; overflow: hidden; }
         .right-col { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
 
-        .card { background: white; padding: 1.2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 1.2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
         
         .stats-grid {
             display: grid;
@@ -151,7 +151,7 @@
     <div class="right-col">
         <h1>⚙️ Admin Dashboard</h1>
 
-        <div class="card" style="border-left: 5px solid var(--primary);">
+        <div class="card">
             <h3>1. Registration Settings</h3>
             <div class="input-group">
                 <label>Active Registration Mode</label>
@@ -210,7 +210,19 @@
         </div>
 
         <div class="card">
-            <h3>5. Full Backup</h3>
+            <h3>5. Download By Employee</h3>
+            <div class="input-group">
+                <label>Employee Code</label>
+                <input type="text" id="emp-code-input" placeholder="Ex: 1234">
+            </div>
+            <button id="download-emp-btn" class="btn" style="width: 100%;">
+                <span class="loader" id="loader-emp"></span>
+                Download Images
+            </button>
+        </div>
+
+        <div class="card">
+            <h3>6. Full Backup</h3>
             <a href="/api/upload/download-all" class="btn" style="width: 100%; justify-content: center; text-decoration: none; box-sizing: border-box; background: #444;">
                 Download ALL ZIP
             </a>
@@ -245,7 +257,53 @@
         }
     }
 
-    loadStats();
+    // Load Config
+    async function loadConfig() {
+        try {
+            const res = await fetch('/api/config/registration-mode');
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('config-mode').value = data.mode;
+            }
+        } catch (err) {
+            console.error('Failed to load config', err);
+        }
+    }
+
+    async function init() {
+        await loadStats();
+        await loadConfig();
+    }
+
+    init();
+
+    // Config Save Logic
+    document.getElementById('save-config-btn').addEventListener('click', async () => {
+        const mode = document.getElementById('config-mode').value;
+        const btn = document.getElementById('save-config-btn');
+        const loader = document.getElementById('loader-config');
+
+        try {
+            btn.disabled = true;
+            loader.style.display = 'inline-block';
+            const res = await fetch('/api/config/update-mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setStatus('Registration mode updated to ' + mode, 'success');
+            } else {
+                setStatus('Error: ' + data.message, 'error');
+            }
+        } catch (err) {
+            setStatus('Failed to update mode', 'error');
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    });
 
     // CSV Upload Logic
     const csvFileInput = document.getElementById('csv-file-input');
@@ -293,6 +351,10 @@
     function setStatus(msg, type) {
         statusMsg.textContent = msg;
         statusMsg.className = type;
+        // Clear success message after 5s
+        if (type === 'success') {
+            setTimeout(() => { if (statusMsg.textContent === msg) statusMsg.textContent = ''; }, 5000);
+        }
     }
 
     async function triggerDownload(url, method, body, loaderId, btnId, filenamePrefix) {
@@ -315,7 +377,6 @@
                 throw new Error(errorData.message || 'Download failed.');
             }
 
-            // Extract filename from headers if possible
             const disposition = res.headers.get('Content-Disposition');
             let filename = filenamePrefix + '.zip';
             if (disposition && disposition.indexOf('attachment') !== -1) {
@@ -325,11 +386,9 @@
                 }
             }
 
-            // Read the binary stream directly to an Object URL
             const blob = await res.blob();
             const downloadUrl = window.URL.createObjectURL(blob);
             
-            // Trigger auto download
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = downloadUrl;
@@ -422,46 +481,6 @@
         const code = document.getElementById('emp-code-input').value.trim();
         if (!code) return setStatus('Enter an employee code.', 'error');
         triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee');
-    });
-
-    // Load Config
-    async function loadConfig() {
-        try {
-            const res = await fetch('/api/config/registration-mode');
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('config-mode').value = data.mode;
-            }
-        } catch (err) {
-            console.error('Failed to load config', err);
-        }
-    }
-
-    loadConfig();
-
-    document.getElementById('save-config-btn').addEventListener('click', async () => {
-        const mode = document.getElementById('config-mode').value;
-        const btn = document.getElementById('save-config-btn');
-        const loader = document.getElementById('loader-config');
-
-        try {
-            btn.disabled = true;
-            loader.style.display = 'inline-block';
-            const res = await fetch('/api/config/update-mode', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode })
-            });
-            const data = await res.json();
-            if (data.success) {
-                setStatus('Registration mode updated to ' + mode, 'success');
-            }
-        } catch (err) {
-            setStatus('Failed to update mode', 'error');
-        } finally {
-            btn.disabled = false;
-            loader.style.display = 'none';
-        }
     });
 
 </script>
