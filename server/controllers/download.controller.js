@@ -9,26 +9,46 @@ const ImageLog = require("../models/ImageLog");
 const Employee = require("../models/Employee");
 const XLSX = require("xlsx");
 
+const EmployeePalm = require("../models/EmployeePalm");
+
 // GET /api/download/registered-excel
 async function downloadRegisteredExcel(req, res) {
   try {
-    const logs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
+    // Get all face logs and palm registrations
+    const faceLogs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
+    const palmLogs = await EmployeePalm.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
 
-    const data = logs.map(log => ({
-      "Employee Code": log.EmployeeCode,
-      "Employee Name": log.EmployeeName,
-      "Department": log.Department,
-      "Captured At (IST)": new Date(log.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-    }));
+    // Create a map of all unique employee codes seen in either collection
+    const allCodes = Array.from(new Set([
+      ...faceLogs.map(l => l.EmployeeCode),
+      ...palmLogs.map(l => l.EmployeeCode)
+    ]));
+
+    const data = [];
+
+    for (const code of allCodes) {
+      const face = faceLogs.find(l => l.EmployeeCode === code);
+      const palm = palmLogs.find(l => l.EmployeeCode === code);
+      
+      data.push({
+        "Employee Code": code,
+        "Employee Name": face ? face.EmployeeName : (palm ? "Registered (Palm)" : "N/A"),
+        "Department": face ? face.Department : "N/A",
+        "Face Status": face ? "Captured" : "Pending",
+        "Face Time (IST)": face ? new Date(face.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-",
+        "Palm Status": palm ? "Captured" : "Pending",
+        "Palm Time (IST)": palm ? new Date(palm.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-"
+      });
+    }
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Registered");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Biometric Registry");
 
     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.attachment("registered_employees.xlsx");
+    res.attachment("biometric_registered_list.xlsx");
     res.send(buffer);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -38,26 +58,32 @@ async function downloadRegisteredExcel(req, res) {
 // GET /api/download/not-registered-excel
 async function downloadNotRegisteredExcel(req, res) {
   try {
-    const registeredCodes = await ImageLog.find({}).distinct("EmployeeCode");
+    const registeredFaceCodes = await ImageLog.find({}).distinct("EmployeeCode");
+    const registeredPalmCodes = await EmployeePalm.find({}).distinct("EmployeeCode");
+    
+    // Union of all registered codes
+    const allRegistered = Array.from(new Set([...registeredFaceCodes, ...registeredPalmCodes]));
+
     const missing = await Employee.find({ 
-      EmployeeCode: { $nin: registeredCodes },
+      EmployeeCode: { $nin: allRegistered },
       IsActive: true 
     }).sort({ EmployeeCode: 1 });
 
     const data = missing.map(emp => ({
       "Employee Code": emp.EmployeeCode,
       "Employee Name": emp.Name,
-      "Department": emp.Department
+      "Department": emp.Department,
+      "Status": "No Biometrics Captured"
     }));
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Missing");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Missing Biometrics");
 
     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.attachment("missing_registration_list.xlsx");
+    res.attachment("missing_biometric_list.xlsx");
     res.send(buffer);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -151,8 +177,9 @@ async function downloadByEmployee(req, res) {
     const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
-    const zipFilename = `employee_${safeCode}_${timestamp}.zip`;
+    const zipFilename = `biometric_${safeCode}_${timestamp}.zip`;
 
+    // streamImagesToZip already handles merging Face + Palm for the given query
     await streamImagesToZip(res, { EmployeeCode: safeCode }, zipFilename);
   } catch (err) {
     console.error("[Download By Employee Error]", err);
@@ -170,8 +197,6 @@ async function downloadByDate(req, res) {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
-    // Ensure the end date covers the entire day
     end.setHours(23, 59, 59, 999);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
@@ -182,7 +207,7 @@ async function downloadByDate(req, res) {
     const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}`;
-    const zipFilename = `export_${timestamp}.zip`;
+    const zipFilename = `biometric_export_${timestamp}.zip`;
 
     await streamImagesToZip(res, { CapturedAt: { $gte: start, $lte: end } }, zipFilename);
   } catch (err) {
