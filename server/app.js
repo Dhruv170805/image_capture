@@ -1,5 +1,5 @@
 /**
- * app.js — Express Application Entry Point with Socket.IO
+ * app.js — Express Application Entry Point with SSE
  */
 
 require("dotenv").config();
