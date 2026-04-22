@@ -1,22 +1,28 @@
 /**
- * Employee Service — MongoDB Layer
+ * Employee Service — MongoDB & Data Processing Layer
  */
 
 const Employee = require("../models/Employee");
+const XLSX = require("xlsx");
 
-async function getEmployee(code) {
-  if (!code || typeof code !== "string") {
-    return { success: false, error: "INVALID_CODE", message: "Employee code is required." };
+/**
+ * Intelligent Lookup: Search by Code OR EmpAliasCode
+ */
+async function getEmployee(input) {
+  if (!input || typeof input !== "string") {
+    return { success: false, error: "INVALID_INPUT", message: "Input is required." };
   }
 
-  const trimmed = code.trim().toUpperCase();
-
-  if (!/^[A-Z0-9]{1,20}$/.test(trimmed)) {
-    return { success: false, error: "INVALID_FORMAT", message: "Invalid employee code format." };
-  }
+  const trimmed = input.trim().toUpperCase();
 
   try {
-    const employee = await Employee.findOne({ EmployeeCode: trimmed });
+    // Search both fields
+    const employee = await Employee.findOne({
+      $or: [
+        { EmployeeCode: trimmed },
+        { EmpAliasCode: trimmed }
+      ]
+    });
 
     if (!employee) {
       return { success: false, error: "NOT_FOUND", message: "Employee not found." };
@@ -29,7 +35,8 @@ async function getEmployee(code) {
     return {
       success: true,
       data: {
-        EmployeeCode: employee.EmployeeCode,
+        EmployeeCode: employee.EmployeeCode || "-",
+        EmpAliasCode: employee.EmpAliasCode || "-",
         Name: employee.Name,
         Department: employee.Department,
       },
@@ -40,43 +47,144 @@ async function getEmployee(code) {
   }
 }
 
-async function bulkUploadEmployees(employees) {
-  try {
-    // 1. Normalize and validate the data
-    const validEmployees = employees.map(emp => {
-      // Handle flexible header names
-      const EmployeeCode = (emp.EmployeeCode || emp.empcode || emp.Code || "").toString().trim();
-      const Name = (emp.Name || emp.name || emp.fullname || "").toString().trim();
-      const Department = (emp.Department || emp.desc || emp.department || emp.DepartmentName || "").toString().trim();
+/**
+ * Generates an Excel Template with strict headers and sample data
+ */
+async function generateTemplate() {
+  const workbook = XLSX.utils.book_new();
 
-      return { EmployeeCode, Name, Department };
-    }).filter(emp => emp.EmployeeCode && emp.Name && emp.Department);
-    
-    if (validEmployees.length === 0) {
-      return { success: false, message: "No valid employee data found in CSV. Expected headers: EmployeeCode, Name, Department (or empcode, name, desc)." };
+  // 1. Template Sheet
+  const templateData = [
+    ["Code", "EMPALIAS Code", "Name", "Dept"],
+    ["1001", "PE001", "John Doe", "Production"],
+    ["", "PE002", "Jane Smith", "Quality"],
+    ["1003", "", "Bob Wilson", "Sales"]
+  ];
+  const wsTemplate = XLSX.utils.aoa_to_sheet(templateData);
+  wsTemplate["!cols"] = [{ wch: 15 }, { wch: 18 }, { wch: 30 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(workbook, wsTemplate, "Employee_Data");
+
+  // 2. Instructions Sheet
+  const guideData = [
+    ["UPLOAD INSTRUCTIONS"],
+    ["1. At least ONE of 'Code' or 'EMPALIAS Code' must be filled for each row."],
+    ["2. 'Name' and 'Dept' are MANDATORY for all employees."],
+    ["3. Codes and Alias Codes must be unique across the system."],
+    ["4. Use only plain text. No special formatting."],
+    ["5. Delete sample rows before uploading your real data."]
+  ];
+  const wsGuide = XLSX.utils.aoa_to_sheet(guideData);
+  wsGuide["!cols"] = [{ wch: 80 }];
+  XLSX.utils.book_append_sheet(workbook, wsGuide, "Instructions");
+
+  return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+}
+
+/**
+ * Production-grade Excel Upload with strict validation and detailed reporting
+ */
+async function uploadExcelEmployees(buffer) {
+  try {
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    const errors = [];
+    const validOperations = [];
+    const seenCodesInFile = new Set();
+    const seenAliasInFile = new Set();
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 2; // +1 for 0-index, +1 for header row
+
+      const code = (row.Code || "").toString().trim().toUpperCase();
+      const alias = (row["EMPALIAS Code"] || row.AliasCode || "").toString().trim().toUpperCase();
+      const name = (row.Name || "").toString().trim();
+      const dept = (row.Dept || "").toString().trim();
+
+      // Validation Rules
+      if (!code && !alias) {
+        errors.push({ row: rowNum, error: "Missing both Code and EMPALIAS Code (At least one required)" });
+        continue;
+      }
+      if (!name) {
+        errors.push({ row: rowNum, error: "Name is required" });
+        continue;
+      }
+      if (!dept) {
+        errors.push({ row: rowNum, error: "Department (Dept) is required" });
+        continue;
+      }
+
+      // Check duplicate in same file
+      if (code && seenCodesInFile.has(code)) {
+        errors.push({ row: rowNum, error: `Duplicate Code in file: ${code}` });
+        continue;
+      }
+      if (alias && seenAliasInFile.has(alias)) {
+        errors.push({ row: rowNum, error: `Duplicate EMPALIAS Code in file: ${alias}` });
+        continue;
+      }
+
+      if (code) seenCodesInFile.add(code);
+      if (alias) seenAliasInFile.add(alias);
+
+      // Build Upsert Operation
+      // We prioritize EmployeeCode as the main filter if it exists, otherwise EmpAliasCode
+      const filter = code ? { EmployeeCode: code } : { EmpAliasCode: alias };
+      
+      validOperations.push({
+        updateOne: {
+          filter,
+          update: { 
+            $set: { 
+              EmployeeCode: code || undefined,
+              EmpAliasCode: alias || undefined,
+              Name: name, 
+              Department: dept,
+              IsActive: true 
+            } 
+          },
+          upsert: true
+        }
+      });
     }
 
-    // 2. Upsert employees
-    const operations = validEmployees.map(emp => ({
-      updateOne: {
-        filter: { EmployeeCode: emp.EmployeeCode.toUpperCase() },
-        update: { 
-          $set: { 
-            Name: emp.Name, 
-            Department: emp.Department,
-            IsActive: true 
-          } 
-        },
-        upsert: true
-      }
-    }));
+    if (errors.length > 0) {
+      return { success: false, errors };
+    }
 
-    await Employee.bulkWrite(operations);
-    return { success: true, count: validEmployees.length };
+    if (validOperations.length === 0) {
+      return { success: false, message: "No data found in Excel file." };
+    }
+
+    // Execute bulk write
+    await Employee.bulkWrite(validOperations);
+    return { success: true, count: validOperations.length };
+
   } catch (err) {
-    console.error("[Bulk Upload Error]", err);
-    throw err;
+    console.error("[Excel Process Error]", err);
+    return { success: false, message: "Invalid Excel format or structure." };
   }
 }
 
-module.exports = { getEmployee, bulkUploadEmployees };
+// Support for old bulkUpload
+async function bulkUploadEmployees(employees) {
+  const operations = employees.map(emp => ({
+    updateOne: {
+      filter: { EmployeeCode: (emp.EmployeeCode || emp.Code).toUpperCase() },
+      update: { $set: { Name: emp.Name, Department: emp.Department, IsActive: true } },
+      upsert: true
+    }
+  }));
+  await Employee.bulkWrite(operations);
+  return { success: true, count: employees.length };
+}
+
+module.exports = { 
+  getEmployee, 
+  generateTemplate, 
+  uploadExcelEmployees,
+  bulkUploadEmployees 
+};

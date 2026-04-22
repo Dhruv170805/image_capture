@@ -345,15 +345,24 @@
             </div>
 
             <div class="card">
-                <h3>2. Upload (CSV)</h3>
-                <div class="input-group" style="margin-top: 15px;">
-                    <label>Select CSV File</label>
-                    <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.75rem; border: none; background: none; padding: 0;">
+                <h3>2. Upload (Excel)</h3>
+                <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <a href="/api/employee/template/download" class="btn" style="background: #1e293b; text-decoration: none;">
+                        📥 DOWNLOAD TEMPLATE (.xlsx)
+                    </a>
+                    
+                    <div style="padding: 15px; border: 2px dashed #e2e8f0; border-radius: 12px; text-align: center; background: #f8fafc;">
+                        <label style="display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 8px;">SELECT FILLED EXCEL</label>
+                        <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="font-size: 0.7rem; width: 100%;">
+                    </div>
+
+                    <button id="upload-excel-btn" class="btn" style="background: var(--primary);">
+                        <span class="loader" id="loader-excel"></span>
+                        UPLOAD EXCEL DATA
+                    </button>
+
+                    <div id="excel-error-log" class="error-log"></div>
                 </div>
-                <button id="upload-csv-btn" class="btn" style="background: #475569;">
-                    <span class="loader" id="loader-csv"></span>
-                    UPLOAD STAFF LIST
-                </button>
             </div>
 
             <div class="card">
@@ -647,29 +656,56 @@
         finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
     };
 
-    // CSV Upload
-    document.getElementById('upload-csv-btn').onclick = async () => {
-        const file = document.getElementById('csv-file-input').files[0];
-        if (!file) return setStatus('Select CSV file', 'error');
-        const fileName = file.name;
-        const btn = document.getElementById('upload-csv-btn');
-        const loader = document.getElementById('loader-csv');
-        btn.disabled = true; btn.setAttribute('aria-busy', 'true'); loader.style.display = 'inline-block';
+    // Excel Upload Logic
+    document.getElementById('upload-excel-btn').onclick = async () => {
+        const fileInput = document.getElementById('excel-file-input');
+        const errorLog = document.getElementById('excel-error-log');
+        const btn = document.getElementById('upload-excel-btn');
+        const loader = document.getElementById('loader-excel');
+        
+        if (!fileInput.files[0]) return setStatus('Select Excel file first', 'error');
+        
+        const file = fileInput.files[0];
+        errorLog.style.display = 'none';
+        errorLog.innerHTML = '';
+        
+        btn.disabled = true;
+        loader.style.display = 'inline-block';
+
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
-                const res = await fetch('/api/employee/upload-csv', {
+                const base64Data = e.target.result.split(',')[1];
+                const res = await fetch('/api/employee/upload-excel', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ csvData: e.target.result, fileName })
+                    body: JSON.stringify({ excelData: base64Data })
                 });
+
                 const result = await res.json();
-                if (result.success) { setStatus(`Updated ${result.count} employees!`, 'success'); loadStats(); }
-                else setStatus('Error: ' + result.message, 'error');
-            } catch (err) { setStatus('Failed upload', 'error'); }
-            finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
+                
+                if (result.success) {
+                    setStatus(`Successfully uploaded ${result.count} employees!`, 'success');
+                    fileInput.value = '';
+                    loadStats();
+                } else if (result.errors) {
+                    setStatus(result.message, 'error');
+                    errorLog.style.display = 'block';
+                    errorLog.innerHTML = '<div style="font-weight:800; font-size:0.7rem; margin-bottom:8px; color:#b91c1c">VALIDATION ERRORS:</div>';
+                    result.errors.forEach(err => {
+                        errorLog.innerHTML += `<div class="error-item">Row ${err.row}: ${err.error}</div>`;
+                    });
+                } else {
+                    setStatus(result.message || 'Upload failed', 'error');
+                }
+            } catch (err) {
+                setStatus('Network error during upload', 'error');
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
         };
-        reader.readAsText(file);
+        reader.readAsDataURL(file);
     };
 
     async function triggerDownload(url, method, body, loaderId, btnId, filenamePrefix) {

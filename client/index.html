@@ -61,6 +61,38 @@
         .progress-dot.active { background: var(--accent); }
         .success-checkmark { width: 60px; height: 60px; margin: 0 auto 1rem; border-radius: 50%; border: 4px solid var(--success); position: relative; }
         .check-icon { position: absolute; width: 30px; height: 15px; border-left: 5px solid var(--success); border-bottom: 5px solid var(--success); transform: rotate(-45deg); top: 18px; left: 15px; }
+
+        /* Employee Detail Card */
+        .emp-detail-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.2rem;
+            margin-top: 1.5rem;
+            border: 2px solid #e2e8f0;
+            display: none;
+            text-align: left;
+            animation: fadeIn 0.4s ease;
+        }
+        .emp-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .emp-detail-item {
+            margin-bottom: 8px;
+        }
+        .emp-detail-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .emp-detail-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
         @media (max-width: 480px) { .card { padding: 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; } .container { padding: 0; } .nav-center { font-size: 1rem; } }
     </style>
 </head>
@@ -80,8 +112,37 @@
         <div class="card">
             <div class="progress-bar" id="progress-bar"><div class="progress-dot" id="dot-1"></div><div class="progress-dot" id="dot-2"></div><div class="progress-dot" id="dot-3"></div></div>
             <div id="stage-verify" class="step active">
-                <h1 style="margin: 1.5rem 0; color: var(--primary); font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
-                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;"><input type="text" id="emp-code" placeholder="Ex: 1234" autofocus><button id="verify-btn" class="btn"><span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.7em">CONTINUE REGISTRATION</small></span></button></div>
+                <h1 style="margin: 1rem 0; color: var(--primary); font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">કર્મચારી તપાસ / EMPLOYEE SEARCH</h1>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="position: relative;">
+                        <input type="text" id="emp-code" placeholder="ENTER CODE OR EMPALIAS CODE" autofocus style="margin-bottom: 10px;">
+                        <button id="search-btn" class="btn" style="padding: 0.8rem; margin-bottom: 1rem; background: var(--accent);"><span>તપાસો / SEARCH 🔍</span></button>
+                    </div>
+
+                    <div id="emp-detail-card" class="emp-detail-card">
+                        <div class="emp-detail-grid" style="grid-template-columns: 1fr 1fr; row-gap: 15px;">
+                            <div class="emp-detail-item" style="grid-column: span 2;">
+                                <div class="emp-detail-label">Name / નામ</div>
+                                <div class="emp-detail-value" id="det-name" style="font-size: 1.4rem;">-</div>
+                            </div>
+                            <div class="emp-detail-item">
+                                <div class="emp-detail-label">Dept / વિભાગ</div>
+                                <div class="emp-detail-value" id="det-dept">-</div>
+                            </div>
+                            <div class="emp-detail-item">
+                                <div class="emp-detail-label">Code / કોડ</div>
+                                <div class="emp-detail-value" id="det-code">-</div>
+                            </div>
+                            <div class="emp-detail-item" style="grid-column: span 2; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                                <div class="emp-detail-label">EMPALIAS Code / ઉપનામ કોડ</div>
+                                <div class="emp-detail-value" id="det-alias">-</div>
+                            </div>
+                        </div>
+                        <button id="verify-btn" class="btn" style="margin-top: 20px; background: var(--success);" disabled>
+                            <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.7em">PROCEED TO REGISTRATION</small></span>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div id="stage-face" class="step">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
@@ -265,7 +326,6 @@
 
         function updateStageLabels() {
             const pb = document.getElementById('palm-back-btn');
-            // Back button should be visible in palm stage, even in BOTH mode
             if (pb) pb.style.display = "block";
         }
 
@@ -279,15 +339,51 @@
             if (currentStage === "PALM") document.getElementById(currentMode === "BOTH" ? 'dot-3' : 'dot-2').classList.add('active');
         }
 
-        document.getElementById('verify-btn').onclick = async () => {
-            const code = document.getElementById('emp-code').value.trim(); if (!code) return;
-            const res = await fetch(`/api/employee/${code}`); const result = await res.json();
-            if (result.success) {
-                employeeCode = result.data.EmployeeCode; employeeName = result.data.Name;
-                faceImageData = null; // Reset stored face data
-                if (currentMode === "PALM") { document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
-                else { document.getElementById('face-user-name').textContent = employeeName; showStage("FACE"); startCamera(false); }
-            } else alert("Invalid Code");
+        document.getElementById('search-btn').onclick = async () => {
+            const input = document.getElementById('emp-code').value.trim(); 
+            if (!input) return;
+            
+            const btn = document.getElementById('search-btn');
+            btn.disabled = true;
+            btn.textContent = "SEARCHING...";
+
+            try {
+                const res = await fetch(`/api/employee/${input}`); 
+                const result = await res.json();
+                
+                if (result.success) {
+                    employeeCode = result.data.EmployeeCode; 
+                    employeeName = result.data.Name;
+                    
+                    // Show Card
+                    document.getElementById('det-name').textContent = employeeName;
+                    document.getElementById('det-dept').textContent = result.data.Department;
+                    document.getElementById('det-code').textContent = employeeCode;
+                    document.getElementById('det-alias').textContent = result.data.EmpAliasCode;
+                    document.getElementById('emp-detail-card').style.display = 'block';
+                    document.getElementById('verify-btn').disabled = false;
+                } else {
+                    alert("Employee not found! / કર્મચારી મળ્યા નથી");
+                    document.getElementById('emp-detail-card').style.display = 'none';
+                }
+            } catch (e) {
+                alert("Connection error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "<span>તપાસો / SEARCH 🔍</span>";
+            }
+        };
+
+        document.getElementById('verify-btn').onclick = () => {
+            if (currentMode === "PALM") { 
+                document.getElementById('palm-user-name').textContent = employeeName; 
+                showStage("PALM"); 
+                startCamera(true); 
+            } else { 
+                document.getElementById('face-user-name').textContent = employeeName; 
+                showStage("FACE"); 
+                startCamera(false); 
+            }
         };
 
         async function triggerPalmCapture() {
@@ -296,7 +392,6 @@
             const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
             const palmData = can.toDataURL('image/jpeg', 0.85);
 
-            // If BOTH mode, upload face first if we haven't already (atomic-like behavior)
             if (currentMode === "BOTH" && faceImageData) {
                 const fRes = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:faceImageData}) });
                 const fResult = await fRes.json();
@@ -318,7 +413,7 @@
             const faceData = can.toDataURL('image/jpeg', 0.9);
 
             if (currentMode === "BOTH") {
-                faceImageData = faceData; // Store face in memory, don't upload yet
+                faceImageData = faceData; 
                 stopCamera(); 
                 document.getElementById('palm-user-name').textContent = employeeName; 
                 showStage("PALM"); 
@@ -330,7 +425,6 @@
         }
 
         document.getElementById('face-capture-btn').onclick = triggerFaceCapture;
-
         document.getElementById('palm-capture-btn').onclick = triggerPalmCapture;
 
         fetch('/api/config/registration-mode').then(r=>r.json()).then(d=>{ if(d.success) currentMode = d.mode; updateProgress(); updateStageLabels(); });

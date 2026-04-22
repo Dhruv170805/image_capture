@@ -74,6 +74,10 @@ app.get("/admin", (req, res) => {
 });
 
 app.get("*", (req, res) => {
+  // If request is for an API that doesn't exist, return JSON 404 instead of index.html
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ success: false, message: `API endpoint not found: ${req.path}` });
+  }
   const indexPath = path.join(__dirname, "../client/index.html");
   if (require("fs").existsSync(indexPath)) res.sendFile(indexPath);
   else res.status(404).send("UI Build not found.");

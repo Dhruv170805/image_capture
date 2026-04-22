@@ -1,6 +1,6 @@
 /**
  * Employee Controller
- * Handles HTTP layer for employee validation endpoint.
+ * Handles HTTP layer for employee management.
  */
 
 const employeeService = require("../services/employee.service");
@@ -16,6 +16,7 @@ async function validateEmployee(req, res) {
         INACTIVE: 403,
         INVALID_CODE: 400,
         INVALID_FORMAT: 400,
+        INVALID_INPUT: 400
       };
       return res.status(statusMap[result.error] || 400).json(result);
     }
@@ -27,24 +28,54 @@ async function validateEmployee(req, res) {
   }
 }
 
-const { Readable } = require("stream");
-const csv = require("csv-parser");
-const UploadedCsv = require("../models/UploadedCsv");
-
-async function uploadEmployeesCSV(req, res) {
+async function downloadTemplate(req, res) {
   try {
-    const { csvData, fileName } = req.body;
-    if (!csvData) {
-      return res.status(400).json({ success: false, message: "csvData is required." });
+    const buffer = await employeeService.generateTemplate();
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=employee_template.xlsx");
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Template generation failed." });
+  }
+}
+
+async function uploadEmployeesExcel(req, res) {
+  try {
+    const { excelData } = req.body; // Expecting base64 string
+    if (!excelData) {
+      return res.status(400).json({ success: false, message: "excelData is required." });
     }
 
-    // Save raw CSV to MongoDB
-    const uploadedRecord = new UploadedCsv({
-      FileName: fileName || "uploaded_list.csv",
-      Content: csvData
-    });
-    await uploadedRecord.save();
+    const buffer = Buffer.from(excelData, "base64");
+    const result = await employeeService.uploadExcelEmployees(buffer);
 
+    if (!result.success && result.errors) {
+      return res.status(422).json({ 
+        success: false, 
+        message: "Excel validation failed. Please check your data.",
+        errors: result.errors 
+      });
+    }
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("[Excel Upload Controller]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// Support for old CSV upload (kept for backward compatibility)
+async function uploadEmployeesCSV(req, res) {
+  try {
+    const { csvData } = req.body;
+    if (!csvData) return res.status(400).json({ success: false, message: "csvData is required." });
+    
+    const { Readable } = require("stream");
+    const csv = require("csv-parser");
     const results = [];
     const stream = Readable.from([csvData]);
 
@@ -52,25 +83,17 @@ async function uploadEmployeesCSV(req, res) {
       .pipe(csv())
       .on("data", (data) => results.push(data))
       .on("end", async () => {
-        try {
-          const result = await employeeService.bulkUploadEmployees(results);
-          
-          // Update record with count
-          if (result.success) {
-            uploadedRecord.ProcessedCount = result.count;
-            await uploadedRecord.save();
-          }
-
-          return res.status(200).json(result);
-        } catch (err) {
-          console.error("[Bulk Process Error]", err);
-          return res.status(500).json({ success: false, message: "Database error during bulk write." });
-        }
+        const result = await employeeService.bulkUploadEmployees(results);
+        return res.status(200).json(result);
       });
   } catch (err) {
-    console.error("[CSV Upload Controller]", err);
     return res.status(500).json({ success: false, message: err.message });
   }
 }
 
-module.exports = { validateEmployee, uploadEmployeesCSV };
+module.exports = { 
+  validateEmployee, 
+  downloadTemplate, 
+  uploadEmployeesExcel,
+  uploadEmployeesCSV 
+};

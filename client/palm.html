@@ -137,6 +137,7 @@
         .check-icon::after { content: ''; position: absolute; width: 3px; height: 25px; background-color: var(--success); left: 21px; top: 38px; transform: rotate(-45deg); animation: icon-line-tip 0.75s; }
         @keyframes icon-line-tip { 0% { width: 0; left: 1px; top: 19px; } 100% { width: 3px; left: 21px; top: 38px; } }
         @keyframes icon-line-long { 0% { width: 0; right: 46px; top: 54px; } 100% { width: 3px; left: 48px; top: 18px; } }
+        
         @media (max-width: 480px) {
             .card { padding: 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; }
             .container { padding: 0; }
@@ -144,6 +145,37 @@
             .name-card p { font-size: 1.2rem; }
             .nav-left span { font-size: 0.9rem !important; }
             .nav-center { font-size: 1rem; }
+        }
+
+        /* Employee Detail Card */
+        .emp-detail-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.2rem;
+            margin-top: 1.5rem;
+            border: 2px solid #e2e8f0;
+            display: none;
+            text-align: left;
+            animation: fadeIn 0.4s ease;
+        }
+        .emp-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .emp-detail-item {
+            margin-bottom: 8px;
+        }
+        .emp-detail-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .emp-detail-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary);
         }
     </style>
 </head>
@@ -168,13 +200,37 @@
         
         <!-- VERIFY -->
         <div id="stage-verify" class="step active">
-            <h1 style="margin: 1.5rem 0; color: var(--primary); font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
+            <h1 style="margin: 1rem 0; color: var(--primary); font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">કર્મચારી તપાસ / EMPLOYEE SEARCH</h1>
             
             <div style="text-align: left; flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
-                <button class="btn" id="start-btn" onclick="startModule()">
-                    <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.8em; font-weight: 500;">CONTINUE REGISTRATION</small></span>
+                <input type="text" id="emp-code" placeholder="ENTER CODE OR EMPALIAS CODE" autofocus style="margin-bottom: 10px;">
+                <button class="btn" id="search-btn" style="background: var(--accent); margin-bottom: 1rem; padding: 0.8rem;">
+                    <span>તપાસો / SEARCH 🔍</span>
                 </button>
+
+                <div id="emp-detail-card" class="emp-detail-card">
+                    <div class="emp-detail-grid" style="grid-template-columns: 1fr 1fr; row-gap: 15px;">
+                        <div class="emp-detail-item" style="grid-column: span 2;">
+                            <div class="emp-detail-label">Name / નામ</div>
+                            <div class="emp-detail-value" id="det-name" style="font-size: 1.4rem;">-</div>
+                        </div>
+                        <div class="emp-detail-item">
+                            <div class="emp-detail-label">Dept / વિભાગ</div>
+                            <div class="emp-detail-value" id="det-dept">-</div>
+                        </div>
+                        <div class="emp-detail-item">
+                            <div class="emp-detail-label">Code / કોડ</div>
+                            <div class="emp-detail-value" id="det-code">-</div>
+                        </div>
+                        <div class="emp-detail-item" style="grid-column: span 2; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                            <div class="emp-detail-label">EMPALIAS Code / ઉપનામ કોડ</div>
+                            <div class="emp-detail-value" id="det-alias">-</div>
+                        </div>
+                    </div>
+                    <button class="btn" id="start-btn" style="margin-top: 20px; background: var(--success);" disabled>
+                        <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.7em">PROCEED TO REGISTRATION</small></span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -274,6 +330,10 @@
         }
     }
 
+    const detailCard = document.getElementById('emp-detail-card');
+    const startBtn = document.getElementById('start-btn');
+    const searchBtn = document.getElementById('search-btn');
+
     function showStage(stage) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         const stageEl = document.getElementById(`stage-${stage}`);
@@ -282,29 +342,68 @@
         else container.classList.remove('wide');
     }
 
-    async function startModule() {
-        const input = document.getElementById('emp-code');
-        const btn = document.getElementById('start-btn');
-        employeeCode = input.value.trim().toUpperCase();
-        if (!employeeCode) return alert("Please enter employee code.");
-        
+    searchBtn.onclick = async () => {
+        const input = document.getElementById('emp-code').value.trim();
+        if (!input) return;
+
+        searchBtn.disabled = true;
+        searchBtn.textContent = "SEARCHING...";
+
         try {
-            btn.disabled = true;
-            const res = await fetch(`/api/employee/${employeeCode}`);
+            const res = await fetch(`/api/employee/${input}`);
             const result = await res.json();
-            
+
             if (result.success) {
+                employeeCode = result.data.EmployeeCode;
                 nameDisplay.textContent = result.data.Name;
-                showStage('capture');
-                initCamera();
+                
+                // Update Card
+                document.getElementById('det-name').textContent = result.data.Name;
+                document.getElementById('det-dept').textContent = result.data.Department;
+                document.getElementById('det-code').textContent = employeeCode;
+                document.getElementById('det-alias').textContent = result.data.EmpAliasCode;
+                
+                detailCard.style.display = 'block';
+                startBtn.disabled = false;
             } else {
-                alert("Employee not found!");
+                alert("Employee not found! / કર્મચારી મળ્યા નથી");
+                detailCard.style.display = 'none';
             }
         } catch (err) {
             alert("Connection error.");
         } finally {
-            btn.disabled = false;
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = "<span>તપાસો / SEARCH 🔍</span>";
         }
+    };
+
+    startBtn.onclick = () => {
+        showStage('capture');
+        initHands();
+    };
+
+    function initHands() {
+        const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+        hands.onResults(onResults);
+        
+        initCamera(hands);
+    }
+
+    async function initCamera(hands) {
+        try {
+            activeCameraInstance = new Camera(videoElement, {
+                onFrame: async () => { await hands.send({ image: videoElement }); },
+                width: 1280, height: 720
+            });
+            await activeCameraInstance.start();
+            cameraActive = true;
+            startTimeout();
+            videoElement.addEventListener('loadedmetadata', () => {
+                canvasElement.width = videoElement.videoWidth;
+                canvasElement.height = videoElement.videoHeight;
+            });
+        } catch (err) { alert("Camera Error"); location.reload(); }
     }
 
     function resetToModal() {
@@ -315,6 +414,8 @@
         cameraActive = false;
         clearGlobalTimeout();
         showStage('verify');
+        detailCard.style.display = 'none';
+        startBtn.disabled = true;
     }
 
     function showToast(msg, type) {
@@ -370,26 +471,6 @@
         captureBtn.disabled = !isReady;
         if (isReady) captureBtn.classList.add('ready'); else captureBtn.classList.remove('ready');
         canvasCtx.restore();
-    }
-
-    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5 });
-    hands.onResults(onResults);
-
-    async function initCamera() {
-        try {
-            activeCameraInstance = new Camera(videoElement, {
-                onFrame: async () => { await hands.send({ image: videoElement }); },
-                width: 1280, height: 720
-            });
-            await activeCameraInstance.start();
-            cameraActive = true;
-            startTimeout();
-            videoElement.addEventListener('loadedmetadata', () => {
-                canvasElement.width = videoElement.videoWidth;
-                canvasElement.height = videoElement.videoHeight;
-            });
-        } catch (err) { alert("Camera Error"); location.reload(); }
     }
 
     captureBtn.onclick = async () => {
