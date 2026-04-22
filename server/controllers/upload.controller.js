@@ -96,30 +96,33 @@ async function downloadAll(req, res) {
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     
-    res.attachment(`full_backup_${timestamp}.zip`);
+    res.attachment(`biometric_full_backup_${timestamp}.zip`);
 
     archive.on("error", (err) => { throw err; });
     archive.pipe(res);
 
     // Create CSV Header
-    let csvContent = "EmployeeCode,EmployeeName,Department,FileName,CapturedAt_IST\n";
+    let csvContent = "Type,EmployeeCode,EmployeeName,Department,FileName,CapturedAt_IST\n";
 
-    const cursor = ImageLog.find({}).cursor();
-
-    for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
+    // 1. Export Face Captures
+    const faceCursor = ImageLog.find({}).cursor();
+    for (let doc = await faceCursor.next(); doc != null; doc = await faceCursor.next()) {
       if (doc.ImageData) {
-        // Ensure .jpg extension
-        let fileName = doc.FileName || `${doc.EmployeeCode}.jpg`;
-        if (fileName.toLowerCase().endsWith(".jpeg")) {
-          fileName = fileName.slice(0, -5) + ".jpg";
-        }
-
-        // Add image to ZIP
-        archive.append(doc.ImageData, { name: `images/${fileName}` });
-        
-        // Add row to CSV Manifest in IST
+        let fileName = `FACE_${doc.EmployeeCode}.jpg`;
+        archive.append(doc.ImageData, { name: `face_captures/${fileName}` });
         const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
-        csvContent += `"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${istTime}"\n`;
+        csvContent += `FACE,"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${istTime}"\n`;
+      }
+    }
+
+    // 2. Export Palm Captures
+    const palmCursor = require("../models/EmployeePalm").find({}).cursor();
+    for (let doc = await palmCursor.next(); doc != null; doc = await palmCursor.next()) {
+      if (doc.ImageData) {
+        let fileName = `PALM_${doc.EmployeeCode}.jpg`;
+        archive.append(doc.ImageData, { name: `palm_captures/${fileName}` });
+        const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
+        csvContent += `PALM,"${doc.EmployeeCode}","N/A","N/A","${fileName}","${istTime}"\n`;
       }
     }
 
