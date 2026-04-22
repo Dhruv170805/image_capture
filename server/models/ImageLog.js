@@ -8,7 +8,7 @@ const ImageLogSchema = new mongoose.Schema({
   FileSizeBytes: { type: Number, required: true },
   ImageData: { type: Buffer, required: true }, // Store the actual image
   ContentType: { type: String, default: "image/jpeg" },
-  CapturedAt: { type: Date, default: Date.now },
+  CapturedAt: { type: Date, default: Date.now, index: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model("ImageLog", ImageLogSchema);

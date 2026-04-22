@@ -81,6 +81,7 @@ async function serveImage(req, res) {
 
 const archiver = require("archiver");
 const ImageLog = require("../models/ImageLog");
+const Employee = require("../models/Employee");
 
 async function downloadAll(req, res) {
   try {
@@ -120,4 +121,21 @@ async function downloadAll(req, res) {
   }
 }
 
-module.exports = { uploadImage, getLogs, serveImage, downloadAll };
+async function getStats(req, res) {
+  try {
+    const totalEmployees = await Employee.countDocuments({ IsActive: true });
+    const totalRegistered = await ImageLog.countDocuments({});
+    const remaining = Math.max(0, totalEmployees - totalRegistered);
+
+    return res.status(200).json({ 
+      success: true, 
+      totalEmployees,
+      totalRegistered,
+      remaining 
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = { uploadImage, getLogs, serveImage, downloadAll, getStats };

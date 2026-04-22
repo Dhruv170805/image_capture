@@ -27,4 +27,34 @@ async function validateEmployee(req, res) {
   }
 }
 
-module.exports = { validateEmployee };
+const { Readable } = require("stream");
+const csv = require("csv-parser");
+
+async function uploadEmployeesCSV(req, res) {
+  try {
+    const { csvData } = req.body;
+    if (!csvData) {
+      return res.status(400).json({ success: false, message: "csvData is required." });
+    }
+
+    const results = [];
+    const stream = Readable.from([csvData]);
+
+    stream
+      .pipe(csv())
+      .on("data", (data) => results.push(data))
+      .on("end", async () => {
+        try {
+          const result = await employeeService.bulkUploadEmployees(results);
+          return res.status(200).json(result);
+        } catch (err) {
+          return res.status(500).json({ success: false, message: "Database error during bulk write." });
+        }
+      });
+  } catch (err) {
+    console.error("[CSV Upload Controller]", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = { validateEmployee, uploadEmployeesCSV };

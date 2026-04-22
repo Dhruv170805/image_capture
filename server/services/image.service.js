@@ -5,9 +5,9 @@
 
 const sharp = require("sharp");
 
-const TARGET_WIDTH = 300; // Increased for better quality
-const TARGET_HEIGHT = 300;
-const JPEG_QUALITY = 60;   // Balanced quality/size
+const TARGET_WIDTH = 256; 
+const TARGET_HEIGHT = 256;
+const JPEG_QUALITY = 50;   // Adjusted to hit ~5KB target with mozjpeg
 const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5 MB limit for high-res uploads
 
 async function processImage(buffer) {
@@ -20,7 +20,13 @@ async function processImage(buffer) {
       fit: "cover",
       position: "centre",
     })
-    .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
+    .sharpen({ sigma: 0.5 }) // Enhance detail before compression
+    .jpeg({ 
+      quality: JPEG_QUALITY, 
+      mozjpeg: true, 
+      progressive: true,
+      chromaSubsampling: '4:2:0' 
+    })
     .toBuffer();
 
   return processed;

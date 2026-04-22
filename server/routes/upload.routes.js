@@ -4,10 +4,13 @@
 
 const express = require("express");
 const router = express.Router();
-const { uploadImage, getLogs, serveImage, downloadAll } = require("../controllers/upload.controller");
+const { uploadImage, getLogs, serveImage, downloadAll, getStats } = require("../controllers/upload.controller");
 
 // POST /api/upload - Upload to DB
 router.post("/", uploadImage);
+
+// GET /api/upload/stats - Get total counts
+router.get("/stats", getStats);
 
 // GET /api/upload/logs - List history
 router.get("/logs", getLogs);

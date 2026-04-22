@@ -5,6 +5,47 @@
 
 const mongoose = require("mongoose");
 const { streamImagesToZip, MAX_DOWNLOAD_LIMIT } = require("../services/download.service");
+const ImageLog = require("../models/ImageLog");
+const Employee = require("../models/Employee");
+
+// GET /api/download/registered-csv
+async function downloadRegisteredCSV(req, res) {
+  try {
+    const logs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
+    let csv = "EmployeeCode,EmployeeName,Department,CapturedAt_IST\n";
+    logs.forEach(log => {
+      const istTime = new Date(log.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+      csv += `"${log.EmployeeCode}","${log.EmployeeName}","${log.Department}","${istTime}"\n`;
+    });
+    res.setHeader("Content-Type", "text/csv");
+    res.attachment("registered_employees.csv");
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// GET /api/download/not-registered-csv
+async function downloadNotRegisteredCSV(req, res) {
+  try {
+    const registeredCodes = await ImageLog.find({}).distinct("EmployeeCode");
+    const missing = await Employee.find({ 
+      EmployeeCode: { $nin: registeredCodes },
+      IsActive: true 
+    }).sort({ EmployeeCode: 1 });
+
+    let csv = "EmployeeCode,Name,Department\n";
+    missing.forEach(emp => {
+      csv += `"${emp.EmployeeCode}","${emp.Name}","${emp.Department}"\n`;
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.attachment("missing_registration_list.csv");
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
 
 // POST /api/download/zip
 async function downloadByIds(req, res) {
@@ -85,4 +126,10 @@ async function downloadByDate(req, res) {
   }
 }
 
-module.exports = { downloadByIds, downloadByEmployee, downloadByDate };
+module.exports = { 
+  downloadByIds, 
+  downloadByEmployee, 
+  downloadByDate, 
+  downloadRegisteredCSV, 
+  downloadNotRegisteredCSV 
+};

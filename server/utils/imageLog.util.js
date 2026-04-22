@@ -25,40 +25,23 @@ function formatISTForFilename(date) {
 async function insertLog(entry) {
   try {
     const istNow = getISTDate();
-    const timestampStr = formatISTForFilename(istNow);
     const safeCode = entry.EmployeeCode.toString().replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 
-    // 1. Update or Create the PRIMARY record (EmployeeCode.jpg)
-    // This record always holds the LATEST photo for this employee.
-    await ImageLog.findOneAndUpdate(
-      { FileName: `${safeCode}.jpg` },
-      {
-        EmployeeCode: safeCode,
-        EmployeeName: entry.EmployeeName,
-        Department: entry.Department,
-        FileName: `${safeCode}.jpg`,
-        FileSizeBytes: entry.FileSizeBytes,
-        ImageData: entry.ImageData,
-        CapturedAt: istNow,
-      },
-      { upsert: true, new: true }
-    );
+    // Remove all previous records for this employee to ensure only the latest one stays
+    await ImageLog.deleteMany({ EmployeeCode: safeCode });
 
-    // 2. Insert the ARCHIVE record (EmployeeCode_Date_Time.jpg)
-    // This preserves the full history with the requested naming convention.
-    const archiveFileName = `${safeCode}_${timestampStr}.jpg`;
-    
-    const archiveLog = new ImageLog({
+    // Create the new latest record
+    const newLog = new ImageLog({
       EmployeeCode: safeCode,
       EmployeeName: entry.EmployeeName,
       Department: entry.Department,
-      FileName: archiveFileName,
+      FileName: `${safeCode}.jpg`,
       FileSizeBytes: entry.FileSizeBytes,
       ImageData: entry.ImageData,
       CapturedAt: istNow,
     });
 
-    return await archiveLog.save();
+    return await newLog.save();
   } catch (err) {
     console.error("[Log Utility Error]", err);
     throw err;
