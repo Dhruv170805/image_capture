@@ -29,13 +29,21 @@ async function validateEmployee(req, res) {
 
 const { Readable } = require("stream");
 const csv = require("csv-parser");
+const UploadedCsv = require("../models/UploadedCsv");
 
 async function uploadEmployeesCSV(req, res) {
   try {
-    const { csvData } = req.body;
+    const { csvData, fileName } = req.body;
     if (!csvData) {
       return res.status(400).json({ success: false, message: "csvData is required." });
     }
+
+    // Save raw CSV to MongoDB
+    const uploadedRecord = new UploadedCsv({
+      FileName: fileName || "uploaded_list.csv",
+      Content: csvData
+    });
+    await uploadedRecord.save();
 
     const results = [];
     const stream = Readable.from([csvData]);
@@ -46,8 +54,16 @@ async function uploadEmployeesCSV(req, res) {
       .on("end", async () => {
         try {
           const result = await employeeService.bulkUploadEmployees(results);
+          
+          // Update record with count
+          if (result.success) {
+            uploadedRecord.ProcessedCount = result.count;
+            await uploadedRecord.save();
+          }
+
           return res.status(200).json(result);
         } catch (err) {
+          console.error("[Bulk Process Error]", err);
           return res.status(500).json({ success: false, message: "Database error during bulk write." });
         }
       });

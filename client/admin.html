@@ -416,7 +416,7 @@
             const res = await fetch(`/api/upload/logs?page=${page}&limit=${itemsPerPage}`);
             const result = await res.json();
             if (result.success) {
-                loadedLogs = result.data;
+                loadedLogs = result.data || [];
                 totalPages = Math.ceil(result.total / itemsPerPage) || 1;
                 renderTable();
                 updatePaginationUI();
@@ -432,6 +432,13 @@
     function renderTable() {
         logsBody.innerHTML = '';
         selectAllCb.checked = false; // Reset select all on new render
+        
+        if (!loadedLogs || loadedLogs.length === 0) {
+            logsBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #64748b; font-weight: 600;">No records found.</td></tr>';
+            checkSelection();
+            return;
+        }
+
         loadedLogs.forEach(log => {
             const tr = document.createElement('tr');
             
@@ -489,7 +496,7 @@
         const btn = document.getElementById('save-config-btn');
         const loader = document.getElementById('loader-config');
         try {
-            btn.disabled = true; loader.style.display = 'inline-block';
+            btn.disabled = true; btn.setAttribute('aria-busy', 'true'); loader.style.display = 'inline-block';
             const res = await fetch('/api/config/update-mode', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -502,29 +509,30 @@
                 setStatus('Update failed: ' + (data.message || 'Unknown error'), 'error');
             }
         } catch (err) { setStatus('Failed to update mode', 'error'); }
-        finally { btn.disabled = false; loader.style.display = 'none'; }
+        finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
     };
 
     // CSV Upload
     document.getElementById('upload-csv-btn').onclick = async () => {
         const file = document.getElementById('csv-file-input').files[0];
         if (!file) return setStatus('Select CSV file', 'error');
+        const fileName = file.name;
         const btn = document.getElementById('upload-csv-btn');
         const loader = document.getElementById('loader-csv');
-        btn.disabled = true; loader.style.display = 'inline-block';
+        btn.disabled = true; btn.setAttribute('aria-busy', 'true'); loader.style.display = 'inline-block';
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const res = await fetch('/api/employee/upload-csv', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ csvData: e.target.result })
+                    body: JSON.stringify({ csvData: e.target.result, fileName })
                 });
                 const result = await res.json();
                 if (result.success) { setStatus(`Updated ${result.count} employees!`, 'success'); loadStats(); }
                 else setStatus('Error: ' + result.message, 'error');
             } catch (err) { setStatus('Failed upload', 'error'); }
-            finally { btn.disabled = false; loader.style.display = 'none'; }
+            finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
         };
         reader.readAsText(file);
     };
@@ -533,7 +541,7 @@
         const btn = document.getElementById(btnId);
         const loader = document.getElementById(loaderId);
         try {
-            btn.disabled = true; loader.style.display = 'inline-block';
+            btn.disabled = true; btn.setAttribute('aria-busy', 'true'); loader.style.display = 'inline-block';
             const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : null });
             
             if (!res.ok) {
@@ -549,7 +557,7 @@
             setStatus('Download Started', 'success');
         } catch (err) { 
             setStatus(err.message || 'Download failed', 'error'); 
-        } finally { btn.disabled = false; loader.style.display = 'none'; }
+        } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
     }
 
     downloadSelectedBtn.onclick = () => {

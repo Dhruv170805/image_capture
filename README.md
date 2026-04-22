@@ -29,21 +29,27 @@ NODE_ENV=production
 ```
 
 ### 3. Data Migration (Seed)
-Migrate your existing `employees.csv` data to MongoDB Atlas:
+You can migrate existing data via the Admin Dashboard or by using the CLI seed utility:
 ```bash
-npm run seed
+npm run seed path/to/your/employees.csv
 ```
 
 ### 4. Run Application
 **Development mode:**
 ```bash
-node server/app.js
+npm run dev
 ```
 
-**Production mode (using PM2 recommended):**
+**Production mode:**
 ```bash
 npm start
 ```
+
+### 5. Features
+- **Flexible CSV Upload:** Upload any CSV in the Admin panel to update your employee master list.
+- **Biometric History:** All uploaded CSV files are logged in MongoDB for audit purposes.
+- **IST Timezone:** All registrations and logs are automatically handled in Indian Standard Time.
+- **Auto-Capture:** Both face and palm registration support stable auto-capture.
 
 ## 📂 Project Structure
 - `server/app.js` - Main entry point
