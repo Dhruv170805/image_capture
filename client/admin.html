@@ -53,17 +53,17 @@
             border-radius: 16px; 
             box-shadow: var(--card-shadow); 
             border: 1px solid rgba(0,0,0,0.03);
+            position: relative;
         }
         
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
-            margin-bottom: 1.5rem;
         }
         .stat-card {
             background: white;
-            padding: 1.2rem;
+            padding: 1.5rem;
             border-radius: 16px;
             box-shadow: var(--card-shadow);
             border-bottom: 4px solid var(--primary);
@@ -82,32 +82,52 @@
             overflow-x: auto;
         }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; color: #475569; position: sticky; top: 0; border-bottom: 2px solid #f1f5f9; }
+        th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #f1f5f9; }
         td { padding: 1rem; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
         tr:hover { background: #f8fafc; }
-...
         
         .loader { width: 14px; height: 14px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: none; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        #status-msg { padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; margin-top: auto; }
-        .error { background: #fee2e2; color: #b91c1c; }
-        .success { background: #f0fdf4; color: #15803d; }
+        #status-msg { padding: 1rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; margin-top: 1rem; text-align: center; }
+        .error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
 
         #live-toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
             background: var(--primary); color: white; padding: 1rem 2rem;
-            border-radius: 50px; font-weight: 800; z-index: 2000;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3); display: none;
-            animation: slideDown 0.5s ease forwards;
+            border-radius: 50px; font-weight: 700; z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none;
+            animation: slideDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
             border: 2px solid white;
         }
-        @keyframes slideDown { from { top: -100px; } to { top: 20px; } }
+        @keyframes slideDown { from { top: -100px; opacity: 0; } to { top: 25px; opacity: 1; } }
 
-        .pagination-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
-        .page-btn { background: #eee; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+        .pagination-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+        .page-btn { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #64748b; transition: all 0.2s; }
+        .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: #f0f7ff; }
         .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+        .btn { 
+            background: var(--primary); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 10px; 
+            cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
+            font-size: 0.9rem; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.1); width: 100%;
+        }
+        .btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; border-color: transparent; }
+
+        .input-group { margin-bottom: 1.2rem; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        input[type="text"], input[type="date"], select { 
+            width: 100%; padding: 0.8rem; border: 2px solid #f1f5f9; border-radius: 10px; 
+            box-sizing: border-box; font-family: inherit; font-weight: 600; color: var(--text);
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--accent); outline: none; background: #fff; }
+
+        h3 { margin: 0 0 1.2rem 0; font-size: 1.1rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
+        
         @media (max-width: 1100px) {
             .main-content { grid-template-columns: 1fr; }
             .right-col { order: -1; }
@@ -117,14 +137,10 @@
 <body>
 
 <nav class="navbar">
-    <div class="nav-left">
-        <img src="logo.png" alt="Logo">
-    </div>
-    <div class="nav-center">
-        Registration For NG P&P
-    </div>
+    <div class="nav-left"><img src="logo.png" alt="Logo"></div>
+    <div class="nav-center">Registration For NG P&P</div>
     <div class="nav-right">
-        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: bold; font-size: 0.9rem;">Back to Capture</a>
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">Back to Capture</a>
     </div>
 </nav>
 
@@ -135,27 +151,27 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <p>Total Staff</p>
-                <h2 id="stat-total">...</h2>
+                <h2 id="stat-total">0</h2>
             </div>
             <div class="stat-card success-bg">
                 <p>Registered</p>
-                <h2 id="stat-registered">...</h2>
+                <h2 id="stat-registered">0</h2>
             </div>
             <div class="stat-card accent">
                 <p>Remaining</p>
-                <h2 id="stat-remaining">...</h2>
+                <h2 id="stat-remaining">0</h2>
             </div>
         </div>
 
-        <div class="card" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
-            <h3>Recent Registrations</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;">
-                <button id="load-logs-btn" class="btn">Refresh List</button>
-                <button id="download-selected-btn" class="btn" disabled>
-                    <span class="loader" id="loader-selected"></span>
-                    Download Selected
-                </button>
-            </div>
+        <div class="card">
+            <h3>Recent Registrations
+                <button id="load-logs-btn" class="page-btn" style="padding: 4px 12px; font-size: 0.75rem;">REFRESH</button>
+            </h3>
+            
+            <button id="download-selected-btn" class="btn" style="margin-bottom: 1rem;" disabled>
+                <span class="loader" id="loader-selected"></span>
+                DOWNLOAD SELECTED (ZIP)
+            </button>
 
             <div class="table-wrap">
                 <table id="logs-table">
@@ -175,7 +191,7 @@
 
             <div class="pagination-ctrl">
                 <button id="prev-page" class="page-btn" disabled>PREVIOUS</button>
-                <span id="page-info" style="font-size: 0.8rem; font-weight: bold; color: #666;">Page 1</span>
+                <span id="page-info" style="font-size: 0.85rem; font-weight: 800; color: #64748b;">Page 1</span>
                 <button id="next-page" class="page-btn" disabled>NEXT</button>
             </div>
         </div>
@@ -186,11 +202,11 @@
 
         <div class="card">
             <h3>1. Update Employee List (CSV)</h3>
-            <p style="font-size: 0.75rem; color: #666; margin-top: 0;">Upload CSV with: <b>EmployeeCode, Name, Department</b></p>
-            <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.8rem; margin-bottom: 10px;">
-            <button id="upload-csv-btn" class="btn" style="width: 100%; background: #2e7d32;">
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Required: <b>EmployeeCode, Name, Department</b></p>
+            <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.85rem; margin-bottom: 15px; width: 100%;">
+            <button id="upload-csv-btn" class="btn" style="background: #2e7d32;">
                 <span class="loader" id="loader-csv"></span>
-                Upload New List
+                UPLOAD NEW LIST
             </button>
         </div>
 
@@ -198,37 +214,37 @@
             <h3>2. Registration Settings</h3>
             <div class="input-group">
                 <label>Active Registration Mode</label>
-                <select id="config-mode" style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #ccc; font-weight: bold;">
+                <select id="config-mode">
                     <option value="FACE">Face Capture Only</option>
                     <option value="PALM">Right Hand Palm Only</option>
                     <option value="BOTH">Mandatory Both (Face + Palm)</option>
                 </select>
             </div>
-            <button id="save-config-btn" class="btn" style="width: 100%; background: var(--primary);">
+            <button id="save-config-btn" class="btn">
                 <span class="loader" id="loader-config"></span>
-                Apply Global Setting
+                APPLY SETTING
             </button>
         </div>
 
         <div class="card">
             <h3>3. Full Backup</h3>
-            <a href="/api/upload/download-all" class="btn" style="width: 100%; justify-content: center; text-decoration: none; box-sizing: border-box; background: #444;">
-                Download ALL ZIP
+            <a href="/api/upload/download-all" class="btn" style="text-decoration: none; background: #334155;">
+                DOWNLOAD ALL BIOMETRICS (ZIP)
             </a>
         </div>
 
         <div class="card">
             <h3>4. Reports (Excel/CSV)</h3>
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <a href="/api/download/registered-excel" class="btn" style="text-decoration: none; justify-content: center;">
-                    Download Registered List (Excel)
+                <a href="/api/download/registered-excel" class="btn" style="text-decoration: none; background: var(--success);">
+                    Download Registered (Excel)
                 </a>
-                <a href="/api/download/not-registered-excel" class="btn" style="background: #666; text-decoration: none; justify-content: center;">
-                    Download Missing List (Excel)
+                <a href="/api/download/not-registered-excel" class="btn" style="text-decoration: none; background: #64748b;">
+                    Download Missing (Excel)
                 </a>
-                <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <a href="/api/download/registered-csv" style="font-size: 0.7rem; color: #666;">Download CSV</a>
-                    <a href="/api/download/not-registered-csv" style="font-size: 0.7rem; color: #666;">Download CSV</a>
+                <div style="display: flex; gap: 10px;">
+                    <a href="/api/download/registered-csv" class="page-btn" style="flex:1; text-align:center; text-decoration:none">CSV List</a>
+                    <a href="/api/download/not-registered-csv" class="page-btn" style="flex:1; text-align:center; text-decoration:none">CSV Missing</a>
                 </div>
             </div>
         </div>
@@ -243,9 +259,9 @@
                 <label>End Date</label>
                 <input type="date" id="date-end">
             </div>
-            <button id="download-date-btn" class="btn" style="width: 100%;">
+            <button id="download-date-btn" class="btn">
                 <span class="loader" id="loader-date"></span>
-                Download Range
+                DOWNLOAD RANGE
             </button>
         </div>
 
@@ -255,9 +271,9 @@
                 <label>Employee Code</label>
                 <input type="text" id="emp-code-input" placeholder="Ex: 1234">
             </div>
-            <button id="download-emp-btn" class="btn" style="width: 100%;">
+            <button id="download-emp-btn" class="btn">
                 <span class="loader" id="loader-emp"></span>
-                Download Images
+                DOWNLOAD IMAGES
             </button>
         </div>
 
@@ -266,7 +282,6 @@
 </div>
 
 <script>
-    // Elements
     const loadLogsBtn = document.getElementById('load-logs-btn');
     const downloadSelectedBtn = document.getElementById('download-selected-btn');
     const logsTable = document.getElementById('logs-table');
@@ -284,10 +299,13 @@
         if (!toast) return;
         toast.textContent = msg;
         toast.style.display = 'block';
-        toast.style.opacity = '1';
-        setTimeout(() => { 
-            toast.style.display = 'none'; 
-        }, 5000);
+        setTimeout(() => { toast.style.display = 'none'; }, 5000);
+    }
+
+    function setStatus(msg, type) {
+        statusMsg.textContent = msg;
+        statusMsg.className = type;
+        if (type === 'success') setTimeout(() => { if (statusMsg.textContent === msg) statusMsg.textContent = ''; }, 5000);
     }
 
     async function loadStats() {
@@ -299,62 +317,47 @@
                 document.getElementById('stat-registered').textContent = result.totalRegistered;
                 document.getElementById('stat-remaining').textContent = result.remaining;
             }
-        } catch (err) {
-            console.error('Failed to load stats', err);
-        }
+        } catch (err) { console.error('Stats error', err); }
     }
 
-    // Load Config
     async function loadConfig() {
         try {
             const res = await fetch('/api/config/registration-mode');
             const data = await res.json();
-            if (data.success) {
-                document.getElementById('config-mode').value = data.mode;
-            }
-        } catch (err) {
-            console.error('Failed to load config', err);
-        }
+            if (data.success) document.getElementById('config-mode').value = data.mode;
+        } catch (err) { console.error('Config load error', err); }
     }
-
-    async function init() {
-        await loadStats();
-        await loadConfig();
-        fetchLogs(1); // Initial load
-        
-        // WebSocket Real-time updates
-        if (typeof io !== 'undefined') {
-            const socket = io();
-            socket.on('registration_updated', async (data) => {
-                console.log("New registration detected via socket:", data);
-                showLiveToast(`New ${data.type} registration: ${data.employeeCode}`);
-                await loadStats();
-                // Only refresh first page automatically
-                if (currentPage === 1) fetchLogs(1);
-            });
-            socket.on('config_updated', (data) => {
-                showLiveToast(`Registration mode changed to: ${data.mode}`);
-                document.getElementById('config-mode').value = data.mode;
-            });
-            socket.on('connect', () => console.log("Connected to WebSocket server"));
-        }
-    }
-
-    init();
 
     async function fetchLogs(page = 1) {
         try {
             currentPage = page;
             const res = await fetch(`/api/upload/logs?page=${page}&limit=${itemsPerPage}`);
             const result = await res.json();
-            
             if (result.success) {
                 loadedLogs = result.data;
                 totalPages = Math.ceil(result.total / itemsPerPage) || 1;
                 renderTable();
                 updatePaginationUI();
             }
-        } catch (err) { console.error('Error loading logs', err); }
+        } catch (err) { console.error('Logs fetch error', err); }
+    }
+
+    function renderTable() {
+        logsBody.innerHTML = '';
+        loadedLogs.forEach(log => {
+            const tr = document.createElement('tr');
+            const type = log.BiometricType || 'FACE';
+            
+            tr.innerHTML = `
+                <td><input type="checkbox" class="log-checkbox" value="${log._id}" onchange="checkSelection()"></td>
+                <td><span style="padding: 4px 10px; border-radius: 50px; font-size: 0.65rem; font-weight: 800; background: ${type === 'FACE' ? '#dbeafe' : '#d1fae5'}; color: ${type === 'FACE' ? '#1e40af' : '#065f46'}; letter-spacing: 0.5px;">${type}</span></td>
+                <td style="font-weight:700">${log.EmployeeName}</td>
+                <td style="color:#64748b; font-weight:600">${log.EmployeeCode}</td>
+                <td>${new Date(log.CapturedAt).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}</td>
+                <td style="color:#94a3b8">${(log.FileSizeBytes / 1024).toFixed(1)} KB</td>
+            `;
+            logsBody.appendChild(tr);
+        });
     }
 
     function updatePaginationUI() {
@@ -363,203 +366,112 @@
         document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
     }
 
-    document.getElementById('prev-page').onclick = () => { if (currentPage > 1) fetchLogs(currentPage - 1); };
-    document.getElementById('next-page').onclick = () => { if (currentPage < totalPages) fetchLogs(currentPage + 1); };
+    window.checkSelection = () => {
+        const cbs = document.querySelectorAll('.log-checkbox:checked');
+        downloadSelectedBtn.disabled = cbs.length === 0;
+    };
 
-    // Config Save Logic
-    document.getElementById('save-config-btn').addEventListener('click', async () => {
+    selectAllCb.onclick = (e) => {
+        document.querySelectorAll('.log-checkbox').forEach(cb => cb.checked = e.target.checked);
+        checkSelection();
+    };
+
+    document.getElementById('prev-page').onclick = () => fetchLogs(currentPage - 1);
+    document.getElementById('next-page').onclick = () => fetchLogs(currentPage + 1);
+    loadLogsBtn.onclick = () => fetchLogs(1);
+
+    document.getElementById('save-config-btn').onclick = async () => {
         const mode = document.getElementById('config-mode').value;
         const btn = document.getElementById('save-config-btn');
         const loader = document.getElementById('loader-config');
-
         try {
-            btn.disabled = true;
-            loader.style.display = 'inline-block';
+            btn.disabled = true; loader.style.display = 'inline-block';
             const res = await fetch('/api/config/update-mode', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode })
             });
-            const data = await res.json();
-            if (data.success) {
-                setStatus('Registration mode updated to ' + mode, 'success');
-            } else {
-                setStatus('Error: ' + data.message, 'error');
-            }
-        } catch (err) {
-            setStatus('Failed to update mode', 'error');
-        } finally {
-            btn.disabled = false;
-            loader.style.display = 'none';
-        }
-    });
+            if ((await res.json()).success) setStatus('Registration mode updated to ' + mode, 'success');
+        } catch (err) { setStatus('Failed to update mode', 'error'); }
+        finally { btn.disabled = false; loader.style.display = 'none'; }
+    };
 
-    // CSV Upload Logic
-    const csvFileInput = document.getElementById('csv-file-input');
-    const uploadCsvBtn = document.getElementById('upload-csv-btn');
-    const loaderCsv = document.getElementById('loader-csv');
-
-    uploadCsvBtn.addEventListener('click', async () => {
-        const file = csvFileInput.files[0];
-        if (!file) return setStatus('Please select a CSV file first.', 'error');
-
-        try {
-            uploadCsvBtn.disabled = true;
-            loaderCsv.style.display = 'inline-block';
-            setStatus('Uploading and processing CSV...', '');
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const csvData = e.target.result;
-                
+    // CSV Upload
+    document.getElementById('upload-csv-btn').onclick = async () => {
+        const file = document.getElementById('csv-file-input').files[0];
+        if (!file) return setStatus('Select CSV file', 'error');
+        const btn = document.getElementById('upload-csv-btn');
+        const loader = document.getElementById('loader-csv');
+        btn.disabled = true; loader.style.display = 'inline-block';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
                 const res = await fetch('/api/employee/upload-csv', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ csvData })
+                    body: JSON.stringify({ csvData: e.target.result })
                 });
-
                 const result = await res.json();
-                if (result.success) {
-                    setStatus(`Successfully updated ${result.count} employees!`, 'success');
-                    loadStats(); // Refresh stats
-                    csvFileInput.value = '';
-                } else {
-                    setStatus('Error: ' + result.message, 'error');
-                }
-                uploadCsvBtn.disabled = false;
-                loaderCsv.style.display = 'none';
-            };
-            reader.readAsText(file);
-        } catch (err) {
-            setStatus('Failed to upload CSV.', 'error');
-            uploadCsvBtn.disabled = false;
-            loaderCsv.style.display = 'none';
-        }
-    });
-
-    function setStatus(msg, type) {
-        statusMsg.textContent = msg;
-        statusMsg.className = type;
-        // Clear success message after 5s
-        if (type === 'success') {
-            setTimeout(() => { if (statusMsg.textContent === msg) statusMsg.textContent = ''; }, 5000);
-        }
-    }
+                if (result.success) { setStatus(`Updated ${result.count} employees!`, 'success'); loadStats(); }
+                else setStatus('Error: ' + result.message, 'error');
+            } catch (err) { setStatus('Failed upload', 'error'); }
+            finally { btn.disabled = false; loader.style.display = 'none'; }
+        };
+        reader.readAsText(file);
+    };
 
     async function triggerDownload(url, method, body, loaderId, btnId, filenamePrefix) {
         const btn = document.getElementById(btnId);
         const loader = document.getElementById(loaderId);
-        
         try {
-            btn.disabled = true;
-            loader.style.display = 'inline-block';
-            setStatus('Generating ZIP stream... Please wait.', 'success');
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: body ? JSON.stringify(body) : null
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Download failed.');
-            }
-
-            const disposition = res.headers.get('Content-Disposition');
-            let filename = filenamePrefix + '.zip';
-            if (disposition && disposition.indexOf('attachment') !== -1) {
-                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-                if (matches != null && matches[1]) { 
-                    filename = matches[1].replace(/['"]/g, '');
-                }
-            }
-
+            btn.disabled = true; loader.style.display = 'inline-block';
+            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : null });
             const blob = await res.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = downloadUrl;
-            a.download = filename;
-            document.body.appendChild(a);
+            a.href = window.URL.createObjectURL(blob);
+            a.download = filenamePrefix + '.zip';
             a.click();
-            window.URL.revokeObjectURL(downloadUrl);
-            document.body.removeChild(a);
-
-            setStatus('Download Complete!', 'success');
-        } catch (err) {
-            setStatus('Error: ' + err.message, 'error');
-        } finally {
-            btn.disabled = false;
-            loader.style.display = 'none';
-        }
+            setStatus('Download Started', 'success');
+        } catch (err) { setStatus('Download failed', 'error'); }
+        finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
-    // Load recent captures - Manual Refresh
-    loadLogsBtn.addEventListener('click', () => fetchLogs(1));
+    downloadSelectedBtn.onclick = () => {
+        const ids = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value);
+        triggerDownload('/api/download/zip', 'POST', { ids }, 'loader-selected', 'download-selected-btn', 'selection');
+    };
 
-    function renderTable() {
-        logsBody.innerHTML = '';
-        loadedLogs.forEach(log => {
-            const tr = document.createElement('tr');
-            
-            const tdCb = document.createElement('td');
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.className = 'log-checkbox';
-            cb.value = log._id;
-            cb.onchange = checkSelection;
-            tdCb.appendChild(cb);
-
-            const tdType = document.createElement('td');
-            const type = log.BiometricType || 'FACE';
-            tdType.innerHTML = `<span style="padding: 4px 10px; border-radius: 50px; font-size: 0.65rem; font-weight: 800; background: ${type === 'FACE' ? '#dbeafe' : '#d1fae5'}; color: ${type === 'FACE' ? '#1e40af' : '#065f46'}; letter-spacing: 0.5px;">${type}</span>`;
-
-            const tdName = document.createElement('td'); tdName.textContent = log.EmployeeName; tdName.style.fontWeight = "700";
-            const tdCode = document.createElement('td'); tdCode.textContent = log.EmployeeCode; tdCode.style.color = "#64748b"; tdCode.style.fontWeight = "600";
-            const tdDate = document.createElement('td'); tdDate.textContent = new Date(log.CapturedAt).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
-            const tdSize = document.createElement('td'); tdSize.textContent = (log.FileSizeBytes / 1024).toFixed(1) + ' KB'; tdSize.style.color = "#94a3b8";
-
-            tr.append(tdCb, tdType, tdName, tdCode, tdDate, tdSize);
-            logsBody.appendChild(tr);
-        });
-        logsTable.style.display = 'table';
-    }
-
-    selectAllCb.addEventListener('change', (e) => {
-        const cbs = document.querySelectorAll('.log-checkbox');
-        cbs.forEach(cb => cb.checked = e.target.checked);
-        checkSelection();
-    });
-
-    function checkSelection() {
-        const cbs = document.querySelectorAll('.log-checkbox:checked');
-        downloadSelectedBtn.disabled = cbs.length === 0;
-    }
-
-    // Download Selected
-    downloadSelectedBtn.addEventListener('click', () => {
-        const selectedIds = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value);
-        if (selectedIds.length === 0) return;
-        triggerDownload('/api/download/zip', 'POST', { ids: selectedIds }, 'loader-selected', 'download-selected-btn', 'selection');
-    });
-
-    // Download Date Range
-    document.getElementById('download-date-btn').addEventListener('click', () => {
+    document.getElementById('download-date-btn').onclick = () => {
         const startDate = document.getElementById('date-start').value;
         const endDate = document.getElementById('date-end').value;
-        if (!startDate || !endDate) return setStatus('Select both start and end dates.', 'error');
-        triggerDownload('/api/download/date', 'POST', { startDate, endDate }, 'loader-date', 'download-date-btn', 'date_range');
-    });
+        if (!startDate || !endDate) return setStatus('Select dates', 'error');
+        triggerDownload('/api/download/date', 'POST', { startDate, endDate }, 'loader-date', 'download-date-btn', 'range');
+    };
 
-    // Download By Employee
-    document.getElementById('download-emp-btn').addEventListener('click', () => {
+    document.getElementById('download-emp-btn').onclick = () => {
         const code = document.getElementById('emp-code-input').value.trim();
-        if (!code) return setStatus('Enter an employee code.', 'error');
-        triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee');
-    });
+        if (!code) return;
+        triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee_' + code);
+    };
 
+    async function init() {
+        await loadStats();
+        await loadConfig();
+        fetchLogs(1);
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.on('registration_updated', async (data) => {
+                showLiveToast(`New ${data.type} registration: ${data.employeeCode}`);
+                await loadStats();
+                if (currentPage === 1) fetchLogs(1);
+            });
+            socket.on('config_updated', (data) => {
+                showLiveToast(`Registration mode changed to: ${data.mode}`);
+                document.getElementById('config-mode').value = data.mode;
+            });
+        }
+    }
+    init();
 </script>
 </body>
 </html>
