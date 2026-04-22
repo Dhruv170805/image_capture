@@ -52,23 +52,31 @@ async function insertLog(entry) {
 
 async function getLogs({ page = 1, limit = 20, empCode = null } = {}) {
   try {
+    const EmployeePalm = require("../models/EmployeePalm");
     const query = {};
     if (empCode) {
       query.EmployeeCode = empCode.trim().toUpperCase();
     }
 
-    const total = await ImageLog.countDocuments(query);
-    const logs = await ImageLog.find(query)
-      .select("-ImageData")
-      .sort({ CapturedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const faceLogs = await ImageLog.find(query).select("-ImageData").lean();
+    const palmLogs = await EmployeePalm.find(query).select("-ImageData").lean();
+
+    // Merge and Tag
+    const combined = [
+      ...faceLogs.map(l => ({ ...l, BiometricType: "FACE" })),
+      ...palmLogs.map(l => ({ ...l, BiometricType: "PALM", EmployeeName: l.EmployeeName || "Registered (Palm)" }))
+    ];
+
+    // Sort combined by date DESC
+    combined.sort((a, b) => new Date(b.CapturedAt) - new Date(a.CapturedAt));
+
+    const paginatedData = combined.slice((page - 1) * limit, page * limit);
 
     return {
-      total,
+      total: combined.length,
       page,
       limit,
-      data: logs,
+      data: paginatedData,
     };
   } catch (err) {
     console.error("[Log Utility Error]", err);

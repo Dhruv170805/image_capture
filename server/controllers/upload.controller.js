@@ -148,9 +148,13 @@ async function downloadAll(req, res) {
 async function getStats(req, res) {
   try {
     const totalEmployees = await Employee.countDocuments({ IsActive: true });
-    // Use distinct count in case cleanup hasn't run yet or for absolute accuracy
-    const registeredCodes = await ImageLog.distinct("EmployeeCode");
-    const totalRegistered = registeredCodes.length;
+    
+    // Get unique codes from both collections
+    const faceCodes = await ImageLog.distinct("EmployeeCode");
+    const palmCodes = await require("../models/EmployeePalm").distinct("EmployeeCode");
+    
+    const registeredCodes = new Set([...faceCodes, ...palmCodes]);
+    const totalRegistered = registeredCodes.size;
     const remaining = Math.max(0, totalEmployees - totalRegistered);
 
     return res.status(200).json({ 

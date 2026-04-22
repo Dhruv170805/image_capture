@@ -84,6 +84,20 @@
         .error { background: #fee2e2; color: #b91c1c; }
         .success { background: #f0fdf4; color: #15803d; }
 
+        #live-toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 1rem 2rem;
+            border-radius: 50px; font-weight: 800; z-index: 2000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); display: none;
+            animation: slideDown 0.5s ease forwards;
+            border: 2px solid white;
+        }
+        @keyframes slideDown { from { top: -100px; } to { top: 20px; } }
+
+        .pagination-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .page-btn { background: #eee; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
         @media (max-width: 1000px) {
             .main-content { grid-template-columns: 1fr; overflow-y: auto; }
             html, body { overflow: auto; height: auto; }
@@ -104,6 +118,8 @@
         <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: bold; font-size: 0.9rem;">Back to Capture</a>
     </div>
 </nav>
+
+<div id="live-toast"></div>
 
 <div class="main-content">
     <div class="left-col">
@@ -137,6 +153,7 @@
                     <thead>
                         <tr>
                             <th><input type="checkbox" id="select-all"></th>
+                            <th>Type</th>
                             <th>Employee</th>
                             <th>Code</th>
                             <th>Date</th>
@@ -145,6 +162,12 @@
                     </thead>
                     <tbody id="logs-body"></tbody>
                 </table>
+            </div>
+
+            <div class="pagination-ctrl">
+                <button id="prev-page" class="page-btn" disabled>PREVIOUS</button>
+                <span id="page-info" style="font-size: 0.8rem; font-weight: bold; color: #666;">Page 1</span>
+                <button id="next-page" class="page-btn" disabled>NEXT</button>
             </div>
         </div>
     </div>
@@ -243,6 +266,17 @@
     const statusMsg = document.getElementById('status-msg');
 
     let loadedLogs = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const itemsPerPage = 20;
+
+    function showLiveToast(msg) {
+        const toast = document.getElementById('live-toast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
 
     async function loadStats() {
         try {
@@ -274,27 +308,51 @@
     async function init() {
         await loadStats();
         await loadConfig();
-        loadLogsBtn.click(); // Initial load of logs
+        fetchLogs(1); // Initial load
         
         // WebSocket Real-time updates
         if (typeof io !== 'undefined') {
             const socket = io();
             socket.on('registration_updated', async (data) => {
                 console.log("New registration detected via socket:", data);
+                showLiveToast(`New ${data.type} registration: ${data.employeeCode}`);
                 await loadStats();
-                // Refresh logs list silently
-                const res = await fetch('/api/upload/logs?limit=100');
-                const result = await res.json();
-                if (result.success) {
-                    loadedLogs = result.data;
-                    renderTable();
-                }
+                // Only refresh first page automatically
+                if (currentPage === 1) fetchLogs(1);
+            });
+            socket.on('config_updated', (data) => {
+                showLiveToast(`Registration mode changed to: ${data.mode}`);
+                document.getElementById('config-mode').value = data.mode;
             });
             socket.on('connect', () => console.log("Connected to WebSocket server"));
         }
     }
 
     init();
+
+    async function fetchLogs(page = 1) {
+        try {
+            currentPage = page;
+            const res = await fetch(`/api/upload/logs?page=${page}&limit=${itemsPerPage}`);
+            const result = await res.json();
+            
+            if (result.success) {
+                loadedLogs = result.data;
+                totalPages = Math.ceil(result.total / itemsPerPage) || 1;
+                renderTable();
+                updatePaginationUI();
+            }
+        } catch (err) { console.error('Error loading logs', err); }
+    }
+
+    function updatePaginationUI() {
+        document.getElementById('prev-page').disabled = currentPage <= 1;
+        document.getElementById('next-page').disabled = currentPage >= totalPages;
+        document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    }
+
+    document.getElementById('prev-page').onclick = () => { if (currentPage > 1) fetchLogs(currentPage - 1); };
+    document.getElementById('next-page').onclick = () => { if (currentPage < totalPages) fetchLogs(currentPage + 1); };
 
     // Config Save Logic
     document.getElementById('save-config-btn').addEventListener('click', async () => {
@@ -426,24 +484,8 @@
         }
     }
 
-    // Load recent captures
-    loadLogsBtn.addEventListener('click', async () => {
-        try {
-            setStatus('Loading logs...', '');
-            const res = await fetch('/api/upload/logs?limit=100');
-            const result = await res.json();
-            
-            if (result.success) {
-                loadedLogs = result.data;
-                renderTable();
-                setStatus(`Loaded ${loadedLogs.length} recent captures.`, 'success');
-            } else {
-                setStatus('Failed to load logs.', 'error');
-            }
-        } catch (err) {
-            setStatus('Network error loading logs.', 'error');
-        }
-    });
+    // Load recent captures - Manual Refresh
+    loadLogsBtn.addEventListener('click', () => fetchLogs(1));
 
     function renderTable() {
         logsBody.innerHTML = '';
@@ -458,12 +500,16 @@
             cb.onchange = checkSelection;
             tdCb.appendChild(cb);
 
+            const tdType = document.createElement('td');
+            const type = log.BiometricType || 'FACE';
+            tdType.innerHTML = `<span style="padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: ${type === 'FACE' ? '#e3f2fd' : '#f1f8e9'}; color: ${type === 'FACE' ? '#1565c0' : '#33691e'};">${type}</span>`;
+
             const tdName = document.createElement('td'); tdName.textContent = log.EmployeeName;
             const tdCode = document.createElement('td'); tdCode.textContent = log.EmployeeCode;
             const tdDate = document.createElement('td'); tdDate.textContent = new Date(log.CapturedAt).toLocaleString();
             const tdSize = document.createElement('td'); tdSize.textContent = (log.FileSizeBytes / 1024).toFixed(1) + ' KB';
 
-            tr.append(tdCb, tdName, tdCode, tdDate, tdSize);
+            tr.append(tdCb, tdType, tdName, tdCode, tdDate, tdSize);
             logsBody.appendChild(tr);
         });
         logsTable.style.display = 'table';
