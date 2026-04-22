@@ -25,13 +25,12 @@ async function streamImagesToZip(res, query, zipFilename) {
   const faceCursor = ImageLog.find(query).limit(MAX_DOWNLOAD_LIMIT / 2).cursor();
   for (let doc = await faceCursor.next(); doc != null; doc = await faceCursor.next()) {
     if (doc.ImageData) {
-      const folderName = doc.EmployeeCode.toUpperCase();
-      let fileName = doc.FileName || `${folderName}_FACE.jpg`;
-      if (fileName.toLowerCase().endsWith(".jpeg")) fileName = fileName.slice(0, -5) + ".jpg";
+      const empCode = doc.EmployeeCode.toUpperCase();
+      const fileName = `${empCode}_FACE.jpg`;
       
-      archive.append(doc.ImageData, { name: `${folderName}/FACE_${fileName}` });
+      archive.append(doc.ImageData, { name: fileName });
       const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
-      manifestCSV += `FACE,"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","FACE_${fileName}","${istTime}"\n`;
+      manifestCSV += `FACE,"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${istTime}"\n`;
       count++;
     }
   }
@@ -40,13 +39,12 @@ async function streamImagesToZip(res, query, zipFilename) {
   const palmCursor = EmployeePalm.find(query).limit(MAX_DOWNLOAD_LIMIT / 2).cursor();
   for (let doc = await palmCursor.next(); doc != null; doc = await palmCursor.next()) {
     if (doc.ImageData) {
-      const folderName = doc.EmployeeCode.toUpperCase();
-      const fileName = doc.FileName || `${folderName}_PALM_RIGHT.jpg`;
+      const empCode = doc.EmployeeCode.toUpperCase();
+      const fileName = `${empCode}_PALM.jpg`;
       
-      archive.append(doc.ImageData, { name: `${folderName}/PALM_${fileName}` });
+      archive.append(doc.ImageData, { name: fileName });
       const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
-      // Note: We don't have Name/Dept in Palm model yet, but we'll use Code
-      manifestCSV += `PALM,"${doc.EmployeeCode}","N/A","N/A","PALM_${fileName}","${istTime}"\n`;
+      manifestCSV += `PALM,"${doc.EmployeeCode}","N/A","N/A","${fileName}","${istTime}"\n`;
       count++;
     }
   }

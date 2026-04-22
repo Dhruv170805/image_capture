@@ -4,9 +4,15 @@
  */
 
 const { processImage, MAX_INPUT_BYTES } = require("../services/image.service");
+const { streamImagesToZip } = require("../services/download.service");
 const { generateFileNames } = require("../utils/filename.util");
 const { insertLog, getLogs: getLogsUtil, getImageById } = require("../utils/imageLog.util");
 const employeeService = require("../services/employee.service");
+const ImageLog = require("../models/ImageLog");
+const Employee = require("../models/Employee");
+const EmployeePalm = require("../models/EmployeePalm");
+const Config = require("../models/Config");
+const archiver = require("archiver");
 
 async function uploadImage(req, res) {
   try {
@@ -88,55 +94,15 @@ async function serveImage(req, res) {
   }
 }
 
-const archiver = require("archiver");
-const ImageLog = require("../models/ImageLog");
-const Employee = require("../models/Employee");
-
 async function downloadAll(req, res) {
   try {
-    const archive = archiver("zip", { zlib: { level: 5 } });
-    
-    // Use IST for filename
     const now = new Date();
     const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     
-    res.attachment(`biometric_full_backup_${timestamp}.zip`);
-
-    archive.on("error", (err) => { throw err; });
-    archive.pipe(res);
-
-    // Create CSV Header
-    let csvContent = "Type,EmployeeCode,EmployeeName,Department,FileName,CapturedAt_IST\n";
-
-    // 1. Export Face Captures
-    const faceCursor = ImageLog.find({}).cursor();
-    for (let doc = await faceCursor.next(); doc != null; doc = await faceCursor.next()) {
-      if (doc.ImageData) {
-        let fileName = `FACE_${doc.EmployeeCode}.jpg`;
-        archive.append(doc.ImageData, { name: `face_captures/${fileName}` });
-        const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
-        csvContent += `FACE,"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${istTime}"\n`;
-      }
-    }
-
-    // 2. Export Palm Captures
-    const palmCursor = require("../models/EmployeePalm").find({}).cursor();
-    for (let doc = await palmCursor.next(); doc != null; doc = await palmCursor.next()) {
-      if (doc.ImageData) {
-        let fileName = `PALM_${doc.EmployeeCode}.jpg`;
-        archive.append(doc.ImageData, { name: `palm_captures/${fileName}` });
-        const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
-        csvContent += `PALM,"${doc.EmployeeCode}","N/A","N/A","${fileName}","${istTime}"\n`;
-      }
-    }
-
-    // Add the CSV manifest to the ZIP
-    archive.append(csvContent, { name: "manifest.csv" });
-
-    await archive.finalize();
-
+    const zipFilename = `biometric_full_backup_${timestamp}.zip`;
+    await streamImagesToZip(res, {}, zipFilename);
   } catch (err) {
     console.error("[Admin Export Error]", err);
     if (!res.headersSent) {
@@ -151,9 +117,26 @@ async function getStats(req, res) {
     
     // Get unique codes from both collections
     const faceCodes = await ImageLog.distinct("EmployeeCode");
-    const palmCodes = await require("../models/EmployeePalm").distinct("EmployeeCode");
+    const palmCodes = await EmployeePalm.distinct("EmployeeCode");
     
-    const registeredCodes = new Set([...faceCodes, ...palmCodes]);
+    let modeConfig = await Config.findOne({ key: "registration_mode" });
+    const mode = modeConfig ? modeConfig.value : "FACE";
+
+    let registeredCodes = new Set();
+    
+    if (mode === "FACE") {
+      registeredCodes = new Set(faceCodes);
+    } else if (mode === "PALM") {
+      registeredCodes = new Set(palmCodes);
+    } else if (mode === "BOTH") {
+      const palmSet = new Set(palmCodes);
+      faceCodes.forEach(code => {
+        if (palmSet.has(code)) {
+          registeredCodes.add(code);
+        }
+      });
+    }
+
     const totalRegistered = registeredCodes.size;
     const remaining = Math.max(0, totalEmployees - totalRegistered);
 
@@ -161,7 +144,10 @@ async function getStats(req, res) {
       success: true, 
       totalEmployees,
       totalRegistered,
-      remaining 
+      remaining,
+      totalFace: faceCodes.length,
+      totalPalm: palmCodes.length,
+      mode
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

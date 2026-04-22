@@ -81,24 +81,17 @@
         .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
         .btn-accent { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 
-        /* Tech Viewfinder UI */
+        /* Tech Viewfinder UI - REMOVED BLUE BOX AS REQUESTED */
         #camera-wrap { 
             position: relative; 
             border-radius: 24px; 
             overflow: hidden; 
             background: #000; 
             margin-bottom: 2rem; 
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 4px solid var(--accent);
             aspect-ratio: 4/3;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
         }
-        .corner-br::before, .corner-br::after, 
-        .corner-bl::before, .corner-br::after {
-            content: ''; position: absolute; width: 25px; height: 25px; border: 4px solid var(--accent); z-index: 10;
-        }
-        .c-tl { top: 15px; left: 15px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
-        .c-tr { top: 15px; right: 15px; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
-        .c-bl { bottom: 15px; left: 15px; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
-        .c-br { bottom: 15px; right: 15px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
 
         .scan-line {
             position: absolute; top: 0; left: 0; width: 100%; height: 4px;
@@ -194,10 +187,8 @@
                 </div>
                 <span class="gu">તમારો ચહેરો સ્કેન કરો</span>
                 <span class="en">Stage 1: Face Identity</span>
-                
                 <div id="camera-wrap">
-                    <div class="corner-br c-tl"></div><div class="corner-br c-tr"></div>
-                    <div class="corner-br c-bl"></div><div class="corner-br c-br"></div>
+                    <div class="scan-line"></div>
                     <video id="face-video" autoplay playsinline></video>
                 </div>
 
@@ -218,8 +209,6 @@
                 <div id="camera-wrap" class="active">
                     <div id="auto-capture-status" style="padding: 8px 20px;">STABILIZING...</div>
                     <div class="scan-line"></div>
-                    <div class="corner-br c-tl"></div><div class="corner-br c-tr"></div>
-                    <div class="corner-br c-bl"></div><div class="corner-br c-br"></div>
                     <video id="palm-video" autoplay playsinline></video>
                     <canvas id="palm-canvas"></canvas>
                     <div class="palm-guide" id="palm-guide">
@@ -266,25 +255,40 @@
         function showLiveToast(msg) {
             const toast = document.getElementById('live-toast');
             toast.textContent = msg;
+            toast.style.display = 'none';
+            void toast.offsetWidth; // Trigger reflow to restart animation
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 4000); 
+            if (window.toastTimeout) clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 4000); 
+        }
+
+        // Initialize Socket.IO early
+        let socket;
+        if (typeof io !== 'undefined') {
+            socket = io();
+            socket.on('connect', () => console.log('🔌 Connected to Server via WebSockets'));
+            socket.on('config_updated', (data) => {
+                console.log('⚙️ System Policy Updated:', data.mode);
+                showLiveToast("System Policy Updated to " + data.mode);
+                currentMode = data.mode;
+                if (currentStage === "VERIFY") {
+                    updateProgress();
+                }
+            });
+            socket.on('disconnect', () => console.warn('🔌 Disconnected from Server'));
         }
 
         async function init() {
-            const res = await fetch('/api/config/registration-mode');
-            const data = await res.json();
-            if (data.success) currentMode = data.mode;
-            updateProgress();
-
-            if (typeof io !== 'undefined') {
-                const socket = io();
-                socket.on('config_updated', (data) => {
-                    showLiveToast("System Policy Updated to " + data.mode);
-                    if (currentStage === "VERIFY") {
-                        currentMode = data.mode;
-                        updateProgress();
-                    }
-                });
+            try {
+                const res = await fetch('/api/config/registration-mode');
+                const data = await res.json();
+                if (data.success) {
+                    currentMode = data.mode;
+                    console.log('✅ Current Mode:', currentMode);
+                }
+                updateProgress();
+            } catch (err) {
+                console.error('Failed to load initial config', err);
             }
         }
 

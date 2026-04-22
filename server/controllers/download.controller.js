@@ -10,30 +10,53 @@ const Employee = require("../models/Employee");
 const XLSX = require("xlsx");
 
 const EmployeePalm = require("../models/EmployeePalm");
+const Config = require("../models/Config");
+
+async function getDynamicRegisteredCodes() {
+  const faceCodes = await ImageLog.distinct("EmployeeCode");
+  const palmCodes = await EmployeePalm.distinct("EmployeeCode");
+  
+  let modeConfig = await Config.findOne({ key: "registration_mode" });
+  const mode = modeConfig ? modeConfig.value : "FACE";
+
+  let registeredCodes = new Set();
+  
+  if (mode === "FACE") {
+    registeredCodes = new Set(faceCodes);
+  } else if (mode === "PALM") {
+    registeredCodes = new Set(palmCodes);
+  } else if (mode === "BOTH") {
+    const palmSet = new Set(palmCodes);
+    faceCodes.forEach(code => {
+      if (palmSet.has(code)) {
+        registeredCodes.add(code);
+      }
+    });
+  }
+  return Array.from(registeredCodes);
+}
 
 // GET /api/download/registered-excel
 async function downloadRegisteredExcel(req, res) {
   try {
-    // Get all face logs and palm registrations
-    const faceLogs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
-    const palmLogs = await EmployeePalm.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
+    const faceLogs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData").lean();
+    const palmLogs = await EmployeePalm.find({}).sort({ CapturedAt: -1 }).select("-ImageData").lean();
+    const employees = await Employee.find({}).lean();
+    const empMap = new Map(employees.map(e => [e.EmployeeCode, e]));
 
-    // Create a map of all unique employee codes seen in either collection
-    const allCodes = Array.from(new Set([
-      ...faceLogs.map(l => l.EmployeeCode),
-      ...palmLogs.map(l => l.EmployeeCode)
-    ]));
+    const registeredCodes = await getDynamicRegisteredCodes();
 
     const data = [];
 
-    for (const code of allCodes) {
+    for (const code of registeredCodes) {
       const face = faceLogs.find(l => l.EmployeeCode === code);
       const palm = palmLogs.find(l => l.EmployeeCode === code);
+      const emp = empMap.get(code) || {};
       
       data.push({
         "Employee Code": code,
-        "Employee Name": face ? face.EmployeeName : (palm ? "Registered (Palm)" : "N/A"),
-        "Department": face ? face.Department : "N/A",
+        "Employee Name": emp.Name || (face ? face.EmployeeName : "Registered (Palm)"),
+        "Department": emp.Department || (face ? face.Department : "N/A"),
         "Face Status": face ? "Captured" : "Pending",
         "Face Time (IST)": face ? new Date(face.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-",
         "Palm Status": palm ? "Captured" : "Pending",
@@ -58,11 +81,7 @@ async function downloadRegisteredExcel(req, res) {
 // GET /api/download/not-registered-excel
 async function downloadNotRegisteredExcel(req, res) {
   try {
-    const registeredFaceCodes = await ImageLog.find({}).distinct("EmployeeCode");
-    const registeredPalmCodes = await EmployeePalm.find({}).distinct("EmployeeCode");
-    
-    // Union of all registered codes
-    const allRegistered = Array.from(new Set([...registeredFaceCodes, ...registeredPalmCodes]));
+    const allRegistered = await getDynamicRegisteredCodes();
 
     const missing = await Employee.find({ 
       EmployeeCode: { $nin: allRegistered },
@@ -73,7 +92,7 @@ async function downloadNotRegisteredExcel(req, res) {
       "Employee Code": emp.EmployeeCode,
       "Employee Name": emp.Name,
       "Department": emp.Department,
-      "Status": "No Biometrics Captured"
+      "Status": "Pending Registration"
     }));
 
     const workbook = XLSX.utils.book_new();
@@ -93,12 +112,29 @@ async function downloadNotRegisteredExcel(req, res) {
 // GET /api/download/registered-csv
 async function downloadRegisteredCSV(req, res) {
   try {
-    const logs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
-    let csv = "EmployeeCode,EmployeeName,Department,CapturedAt_IST\n";
-    logs.forEach(log => {
-      const istTime = new Date(log.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-      csv += `"${log.EmployeeCode}","${log.EmployeeName}","${log.Department}","${istTime}"\n`;
+    const registeredCodes = await getDynamicRegisteredCodes();
+    const faceLogs = await ImageLog.find({ EmployeeCode: { $in: registeredCodes } }).select("-ImageData").lean();
+    const palmLogs = await EmployeePalm.find({ EmployeeCode: { $in: registeredCodes } }).select("-ImageData").lean();
+    const employees = await Employee.find({ EmployeeCode: { $in: registeredCodes } }).lean();
+    const empMap = new Map(employees.map(e => [e.EmployeeCode, e]));
+
+    let csv = "EmployeeCode,EmployeeName,Department,FaceStatus,FaceTimeIST,PalmStatus,PalmTimeIST\n";
+    
+    registeredCodes.forEach(code => {
+      const face = faceLogs.find(l => l.EmployeeCode === code);
+      const palm = palmLogs.find(l => l.EmployeeCode === code);
+      const emp = empMap.get(code) || {};
+      
+      const name = emp.Name || (face ? face.EmployeeName : "N/A");
+      const dept = emp.Department || (face ? face.Department : "N/A");
+      const faceStatus = face ? "Captured" : "Pending";
+      const faceTime = face ? new Date(face.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-";
+      const palmStatus = palm ? "Captured" : "Pending";
+      const palmTime = palm ? new Date(palm.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-";
+
+      csv += `"${code}","${name}","${dept}","${faceStatus}","${faceTime}","${palmStatus}","${palmTime}"\n`;
     });
+
     res.setHeader("Content-Type", "text/csv");
     res.attachment("registered_employees.csv");
     res.send(csv);
@@ -110,7 +146,7 @@ async function downloadRegisteredCSV(req, res) {
 // GET /api/download/not-registered-csv
 async function downloadNotRegisteredCSV(req, res) {
   try {
-    const registeredCodes = await ImageLog.find({}).distinct("EmployeeCode");
+    const registeredCodes = await getDynamicRegisteredCodes();
     const missing = await Employee.find({ 
       EmployeeCode: { $nin: registeredCodes },
       IsActive: true 

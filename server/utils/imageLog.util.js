@@ -53,6 +53,8 @@ async function insertLog(entry) {
 async function getLogs({ page = 1, limit = 20, empCode = null } = {}) {
   try {
     const EmployeePalm = require("../models/EmployeePalm");
+    const Employee = require("../models/Employee");
+    
     const query = {};
     if (empCode) {
       query.EmployeeCode = empCode.trim().toUpperCase();
@@ -60,12 +62,54 @@ async function getLogs({ page = 1, limit = 20, empCode = null } = {}) {
 
     const faceLogs = await ImageLog.find(query).select("-ImageData").lean();
     const palmLogs = await EmployeePalm.find(query).select("-ImageData").lean();
+    
+    // We also want to make sure we have the latest name/department, so let's get employees
+    const allCodes = new Set([...faceLogs.map(l => l.EmployeeCode), ...palmLogs.map(l => l.EmployeeCode)]);
+    const employees = await Employee.find({ EmployeeCode: { $in: Array.from(allCodes) } }).lean();
+    const empMap = new Map(employees.map(e => [e.EmployeeCode, e]));
 
-    // Merge and Tag
-    const combined = [
-      ...faceLogs.map(l => ({ ...l, BiometricType: "FACE" })),
-      ...palmLogs.map(l => ({ ...l, BiometricType: "PALM", EmployeeName: l.EmployeeName || "Registered (Palm)" }))
-    ];
+    const userMap = new Map();
+
+    const getOrCreateUser = (code) => {
+      if (!userMap.has(code)) {
+        const emp = empMap.get(code) || {};
+        userMap.set(code, {
+          EmployeeCode: code,
+          EmployeeName: emp.Name || "Unknown",
+          Department: emp.Department || "N/A",
+          hasFace: false,
+          hasPalm: false,
+          faceSize: 0,
+          palmSize: 0,
+          CapturedAt: new Date(0),
+          faceId: null,
+          palmId: null
+        });
+      }
+      return userMap.get(code);
+    };
+
+    faceLogs.forEach(l => {
+      const user = getOrCreateUser(l.EmployeeCode);
+      user.hasFace = true;
+      user.faceSize = l.FileSizeBytes || 0;
+      user.faceId = l._id;
+      if (new Date(l.CapturedAt) > new Date(user.CapturedAt)) {
+        user.CapturedAt = l.CapturedAt;
+      }
+    });
+
+    palmLogs.forEach(l => {
+      const user = getOrCreateUser(l.EmployeeCode);
+      user.hasPalm = true;
+      user.palmSize = l.FileSizeBytes || 0;
+      user.palmId = l._id;
+      if (new Date(l.CapturedAt) > new Date(user.CapturedAt)) {
+        user.CapturedAt = l.CapturedAt;
+      }
+    });
+
+    const combined = Array.from(userMap.values());
 
     // Sort combined by date DESC
     combined.sort((a, b) => new Date(b.CapturedAt) - new Date(a.CapturedAt));

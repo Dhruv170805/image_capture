@@ -68,6 +68,11 @@ app.get("/api/health", (req, res) => {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.static(path.join(__dirname, "../client")));
 
+// Specific route for Admin
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/admin.html"));
+});
+
 app.get("*", (req, res) => {
   const indexPath = path.join(__dirname, "../client/index.html");
   if (require("fs").existsSync(indexPath)) res.sendFile(indexPath);
