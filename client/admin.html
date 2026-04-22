@@ -178,35 +178,30 @@
         }
 
         .notification {
-            background: rgba(255, 255, 255, 0.2); /* Transparent liquid base */
-            backdrop-filter: blur(25px) saturate(200%);
-            -webkit-backdrop-filter: blur(25px) saturate(200%);
+            background: rgba(0, 0, 0, 0.75); /* Darker glass for better contrast */
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
             color: #ffffff;
             padding: 10px 22px;
             border-radius: 50px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.15); /* Subtle inner edge */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             gap: 12px;
             min-width: 240px;
             max-width: 480px;
-            border-top: 1px solid rgba(255, 255, 255, 0.4); /* Glass highlight */
+            border-top: 1px solid rgba(255, 255, 255, 0.15); /* Subtle glass highlight */
             animation: appleSlideIn 0.5s cubic-bezier(0.2, 1, 0.2, 1) forwards;
             pointer-events: auto;
             position: relative;
             white-space: nowrap;
         }
 
-        .notification.success { border-bottom: 3px solid #34c759; }
-        .notification.info { border-bottom: 3px solid #007aff; }
-        .notification.warning { border-bottom: 3px solid #ff9500; }
-        .notification.registration { border-bottom: 3px solid #af52de; }
-        .notification.config { border-bottom: 3px solid #ffcc00; }
+        /* Removed bottom borders for cleaner look */
         
         .notification-icon {
             font-size: 1.2rem;
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
         }
 
         .notification-content {
@@ -350,7 +345,7 @@
             </div>
 
             <div class="card">
-                <h3>2. Bulk Upload (CSV)</h3>
+                <h3>2. Upload (CSV)</h3>
                 <div class="input-group" style="margin-top: 15px;">
                     <label>Select CSV File</label>
                     <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.75rem; border: none; background: none; padding: 0;">
