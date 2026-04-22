@@ -66,7 +66,6 @@ async function downloadNotRegisteredExcel(req, res) {
 
 // GET /api/download/registered-csv
 async function downloadRegisteredCSV(req, res) {
-...
   try {
     const logs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
     let csv = "EmployeeCode,EmployeeName,Department,CapturedAt_IST\n";

@@ -14,7 +14,14 @@ const {
   downloadNotRegisteredExcel
 } = require("../controllers/download.controller");
 
-// ... (other routes)
+// POST /api/download/zip - Download specific selection
+router.post("/zip", downloadByIds);
+
+// GET /api/download/employee/:code - Download all for a specific employee
+router.get("/employee/:code", downloadByEmployee);
+
+// POST /api/download/date - Download by date range
+router.post("/date", downloadByDate);
 
 // GET /api/download/registered-excel
 router.get("/registered-excel", downloadRegisteredExcel);
