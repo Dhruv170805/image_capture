@@ -3,47 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Biometric Face Capture | PRINT ELECTRONICS</title>
+    <title>Biometric Registration | PRINT ELECTRONICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
-    <!-- MediaPipe Face Mesh -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    
     <style>
         :root { 
-            --primary: #003366; --accent: #3b82f6; 
-            --glass: rgba(255, 255, 255, 0.9);
-            --success: #10b981; --invalid: #ef4444; --warning: #f59e0b;
+            --primary: #003366; 
+            --accent: #3b82f6; 
+            --bg-gradient: radial-gradient(at 0% 0%, hsla(210,100%,96%,1) 0, transparent 50%), 
+                           radial-gradient(at 50% 0%, hsla(225,100%,94%,1) 0, transparent 50%), 
+                           radial-gradient(at 100% 0%, hsla(190,100%,92%,1) 0, transparent 50%);
+            --glass: rgba(255, 255, 255, 0.85);
+            --success: #10b981; 
+            --invalid: #ef4444; 
+            --warning: #f59e0b;
         }
         
         html, body { height: 100dvh; margin: 0; overflow: hidden; font-family: 'Outfit', sans-serif; background: #f8fafc; }
-        body { display: flex; flex-direction: column; }
+        body { 
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+        }
 
         .navbar { 
-            background: white; padding: 0.8rem 1.5rem; display: flex; 
-            justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid #e2e8f0; flex-shrink: 0; 
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 1.5rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            flex-shrink: 0;
+            z-index: 100;
         }
         .navbar img { height: 35px; }
+        .nav-center { font-size: 1.2rem; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; }
 
-        .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0.5rem; }
+        .container { 
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
         .card { 
-            background: var(--glass); padding: 1.5rem; border-radius: 24px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px;
-            max-height: 100%; display: flex; flex-direction: column; transition: all 0.4s ease;
+            background: var(--glass); 
+            backdrop-filter: blur(12px);
+            padding: 1.5rem; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06); 
+            border: 1px solid rgba(255,255,255,0.5);
+            text-align: center; 
+            width: 100%;
+            max-width: 500px;
+            max-height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .wide .card { max-width: 850px; }
-
-        .step { display: none; flex-direction: column; height: 100%; }
+        
+        .step { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .step.active { display: flex; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 1.2rem; 
+            border-radius: 16px; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 51, 102, 0.2); }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+        .btn-capture.ready { background: var(--success); transform: scale(1.02); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+
+        input { 
+            width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; 
+            border: 2px solid #e2e8f0; border-radius: 16px; 
+            font-size: 1.8rem; text-align: center; font-weight: 900; 
+            box-sizing: border-box; color: var(--primary); background: white;
+        }
 
         #camera-wrap { 
-            position: relative; border-radius: 20px; overflow: hidden; 
-            background: #000; margin-bottom: 1rem; border: 4px solid #cbd5e1;
-            aspect-ratio: 4/3; flex: 1; min-height: 0;
+            position: relative; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            background: #000; 
+            margin-bottom: 1rem; 
+            border: 4px solid #cbd5e1;
+            aspect-ratio: 4/3;
+            flex: 1;
+            min-height: 0;
+            transition: border-color 0.3s;
         }
         #camera-wrap.valid { border-color: var(--success); }
         #camera-wrap.partial { border-color: var(--warning); }
@@ -54,43 +125,41 @@
 
         .face-oval {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 55%; height: 75%; border: 3px dashed rgba(255,255,255,0.5);
+            width: 55%; height: 75%; border: 3px dashed rgba(255,255,255,0.4);
             border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
             pointer-events: none; z-index: 10; transition: all 0.3s;
         }
-        .valid .face-oval { border-color: var(--success); border-style: solid; box-shadow: 0 0 0 1000px rgba(16, 185, 129, 0.1); }
+        .valid .face-oval { border-color: var(--success); border-style: solid; background: rgba(16, 185, 129, 0.05); }
 
         .instruction-box {
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            background: rgba(0,0,0,0.85); color: white; padding: 10px 20px;
             border-radius: 50px; font-weight: 800; font-size: 0.9rem;
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             text-align: center; width: 85%; z-index: 20; text-transform: uppercase;
+            letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.2);
         }
 
-        .name-card { background: white; padding: 1rem; border-radius: 18px; border: 2px solid var(--accent); margin-bottom: 1rem; }
-        .name-card p { margin: 0; font-weight: 900; font-size: 1.4rem; color: var(--primary); }
-
-        .btn { 
-            background: var(--primary); color: white; border: none; padding: 1.2rem; 
-            border-radius: 16px; font-size: 1.1rem; font-weight: 800; cursor: pointer;
-            text-transform: uppercase; transition: 0.3s;
+        .name-card { 
+            background: white; padding: 1rem; border-radius: 18px; 
+            border: 2px solid var(--accent); margin-bottom: 1rem; flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
         }
-        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
-        .btn-capture.ready { background: var(--success); transform: scale(1.02); }
+        .name-card span { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .name-card p { margin: 0; font-weight: 900; font-size: 1.6rem; color: var(--primary); line-height: 1.1; }
 
-        input { width: 100%; padding: 1.2rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.8rem; text-align: center; font-weight: 900; }
-
-        .progress-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; }
+        .progress-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-shrink: 0; }
         .progress-dot { flex: 1; height: 5px; background: #e2e8f0; border-radius: 10px; }
         .progress-dot.active { background: var(--accent); }
 
-        /* Success UI */
         .success-checkmark { width: 60px; height: 60px; margin: 0 auto 1rem; border-radius: 50%; border: 4px solid var(--success); position: relative; }
         .check-icon { position: absolute; width: 30px; height: 15px; border-left: 5px solid var(--success); border-bottom: 5px solid var(--success); transform: rotate(-45deg); top: 18px; left: 15px; }
 
         @media (max-width: 480px) {
-            .card { padding: 1rem; border-radius: 0; height: 100%; border: none; }
+            .card { padding: 1.2rem 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; }
+            .container { padding: 0; }
             .nav-center { font-size: 1rem; }
+            .name-card p { font-size: 1.3rem; }
+            input { font-size: 1.6rem; }
         }
     </style>
 </head>
@@ -99,7 +168,7 @@
     <nav class="navbar">
         <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
             <img src="logo.png" alt="Logo">
-            <div style="display: flex; flex-direction: column; line-height: 1;">
+            <div style="display: flex; flex-direction: column; line-height: 1; text-align: left;">
                 <span style="font-weight: 900; color: var(--primary); font-size: 1rem; text-transform: uppercase;">Print</span>
                 <span style="font-weight: 800; color: var(--accent); font-size: 0.75rem; text-transform: uppercase;">Electronics</span>
             </div>
@@ -118,15 +187,22 @@
             
             <!-- STAGE: VERIFY -->
             <div id="stage-verify" class="step active">
-                <h1 style="color: var(--primary); font-size: 1.6rem; font-weight: 900; margin-bottom: 2rem;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
-                <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
-                <button id="verify-btn" class="btn">Continue / આગળ વધો</button>
+                <h1 style="margin: 0 0 1.5rem 0; color: var(--primary); font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
+                    <button id="verify-btn" class="btn">
+                        <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.7em">CONTINUE REGISTRATION</small></span>
+                    </button>
+                </div>
             </div>
 
             <!-- STAGE: FACE -->
             <div id="stage-face" class="step">
-                <button class="btn" style="width: auto; padding: 0.5rem 1rem; margin-bottom: 1rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                    <button class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569; box-shadow: none;" onclick="goBack()">⬅️ BACK</button>
+                </div>
                 <div class="name-card">
+                    <span>Registering Employee / કર્મચારી</span>
                     <p id="face-user-name"></p>
                 </div>
 
@@ -138,7 +214,7 @@
                 </div>
 
                 <button id="face-capture-btn" class="btn btn-capture" disabled>
-                    Capture Identity / ફોટો પાડો 📸
+                    <span>ચહેરો સ્કેન કરો / CAPTURE 📸</span>
                 </button>
             </div>
 
@@ -146,9 +222,10 @@
             <div id="stage-thanks" class="step">
                 <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
                     <div class="success-checkmark"><div class="check-icon"></div></div>
-                    <h1 style="color: var(--success); font-weight: 900;">Success / સફળ!</h1>
-                    <p style="color: #64748b; font-weight: 700; margin-bottom: 2rem;">Registration Complete.</p>
-                    <button class="btn" onclick="location.reload()">Next Registration</button>
+                    <h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2.2rem;">Success / સફળ!</h1>
+                    <h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Registration Complete</h2>
+                    <p style="color: #64748b; font-weight: 700; margin-bottom: 2rem; font-size: 1.1rem;">Your biometric profile has been secured.</p>
+                    <button class="btn" onclick="location.reload()"><span>Register Another / બીજું</span></button>
                 </div>
             </div>
         </div>
@@ -171,8 +248,6 @@
 
         faceMesh.onResults(onFaceResults);
 
-        function onResults(results) { /* Placeholder for global */ }
-
         function onFaceResults(results) {
             if (currentStage !== "FACE") return;
             const canvas = document.getElementById('face-canvas');
@@ -187,35 +262,19 @@
 
             if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
                 instr.textContent = "No Face Detected / ચહેરો દેખાતો નથી";
-                btn.disabled = true;
-                return;
+                btn.disabled = true; return;
             }
 
             if (results.multiFaceLandmarks.length > 1) {
                 instr.textContent = "Multiple People Detected / એક જ વ્યક્તિ રહો";
-                btn.disabled = true;
-                return;
+                btn.disabled = true; return;
             }
 
             const landmarks = results.multiFaceLandmarks[0];
-            
-            // 1. Pose Estimation (Simplified Yaw/Pitch/Roll)
-            const nose = landmarks[1];
-            const chin = landmarks[152];
-            const forehead = landmarks[10];
-            const leftEye = landmarks[33];
-            const rightEye = landmarks[263];
-
+            const nose = landmarks[1], leftEye = landmarks[33], rightEye = landmarks[263];
             const yaw = Math.abs(nose.x - (leftEye.x + rightEye.x) / 2) * 100;
             const roll = Math.abs(leftEye.y - rightEye.y) * 100;
-            const pitch = Math.abs((forehead.y + chin.y) / 2 - nose.y) * 100;
-
-            // 2. Eye Openness (Simple Distance)
-            const leftTop = landmarks[159].y, leftBottom = landmarks[145].y;
-            const rightTop = landmarks[386].y, rightBottom = landmarks[374].y;
-            const eyesClosed = (leftBottom - leftTop < 0.015) || (rightBottom - rightTop < 0.015);
-
-            // 3. Size and Position (Check if within center 60% of screen)
+            const eyesClosed = (landmarks[145].y - landmarks[159].y < 0.015) || (landmarks[374].y - landmarks[386].y < 0.015);
             const inCenter = nose.x > 0.35 && nose.x < 0.65 && nose.y > 0.3 && nose.y < 0.7;
 
             if (yaw > 5 || roll > 5) {
@@ -231,11 +290,7 @@
                 wrap.className = "valid";
                 btn.classList.add('ready');
             }
-            
             btn.disabled = !faceReady;
-            
-            // Optional: Draw landmarks for debug
-            // drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {color: '#C0C0C070', lineWidth: 1});
         }
 
         async function startCamera() {
@@ -247,17 +302,12 @@
                     const canvas = document.getElementById('face-canvas');
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 };
-                activeCamera = new Camera(video, {
-                    onFrame: async () => { await faceMesh.send({ image: video }); }
-                });
+                activeCamera = new Camera(video, { onFrame: async () => { await faceMesh.send({ image: video }); } });
                 await activeCamera.start();
             } catch (e) { alert("Camera Error"); }
         }
 
-        function stopCamera() {
-            if (activeCamera) activeCamera.stop();
-            if (stream) stream.getTracks().forEach(t => t.stop());
-        }
+        function stopCamera() { if (activeCamera) activeCamera.stop(); if (stream) stream.getTracks().forEach(t => t.stop()); }
 
         document.getElementById('verify-btn').onclick = async () => {
             const code = document.getElementById('emp-code').value.trim();
@@ -281,24 +331,20 @@
             const ctx = canvas.getContext('2d');
             ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0);
-            
             const imageData = canvas.toDataURL('image/jpeg', 0.9);
             const res = await fetch('/api/upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ empCode: employeeCode, image: imageData })
             });
-            if ((await res.json()).success) {
-                stopCamera();
-                showStage("THANKS");
-            }
+            if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
         };
 
         function showStage(s) {
             currentStage = s;
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
             document.getElementById(`stage-${s.toLowerCase()}`).classList.add('active');
-            if (s === "FACE") document.querySelector('.container').classList.add('wide');
+            const cont = document.querySelector('.container');
+            if (s === "FACE") cont.classList.add('wide'); else cont.classList.remove('wide');
             updateProgress();
         }
 
@@ -309,6 +355,13 @@
         }
 
         function goBack() { stopCamera(); showStage("VERIFY"); }
+        
+        // Initial sync
+        fetch('/api/config/registration-mode').then(r => r.json()).then(d => {
+            if (d.success) {
+                if (d.mode !== "BOTH") document.getElementById('dot-3').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
