@@ -16,7 +16,7 @@
             --warning: #f59e0b;
             --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
-        html, body { height: 100%; margin: 0; }
+        html, body { min-height: 100%; margin: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
         
         .navbar {
@@ -27,7 +27,7 @@
             align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             z-index: 100;
-            flex-shrink: 0;
+            position: sticky; top: 0;
         }
         .navbar img { height: 40px; }
         .nav-center { font-size: 1.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
@@ -42,8 +42,10 @@
             margin: 0 auto;
             width: 100%;
             box-sizing: border-box;
-            overflow: hidden;
         }
+
+        .left-col { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+        .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
 
         .card { 
             background: white; 
@@ -51,7 +53,6 @@
             border-radius: 16px; 
             box-shadow: var(--card-shadow); 
             border: 1px solid rgba(0,0,0,0.03);
-            transition: transform 0.2s;
         }
         
         .stats-grid {
@@ -74,11 +75,11 @@
         .stat-card.accent { border-bottom-color: var(--warning); }
 
         .table-wrap { 
-            flex: 1; 
-            overflow-y: auto; 
             border-radius: 12px; 
             border: 1px solid #f1f5f9;
             margin-top: 1rem;
+            background: white;
+            overflow-x: auto;
         }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; color: #475569; position: sticky; top: 0; border-bottom: 2px solid #f1f5f9; }
@@ -107,10 +108,9 @@
         .page-btn { background: #eee; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
         .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        @media (max-width: 1000px) {
-            .main-content { grid-template-columns: 1fr; overflow-y: auto; }
-            html, body { overflow: auto; height: auto; }
-            .table-wrap { max-height: 400px; }
+        @media (max-width: 1100px) {
+            .main-content { grid-template-columns: 1fr; }
+            .right-col { order: -1; }
         }
     </style>
 </head>
@@ -284,7 +284,10 @@
         if (!toast) return;
         toast.textContent = msg;
         toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        toast.style.opacity = '1';
+        setTimeout(() => { 
+            toast.style.display = 'none'; 
+        }, 5000);
     }
 
     async function loadStats() {
