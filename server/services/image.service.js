@@ -5,8 +5,8 @@
 
 const sharp = require("sharp");
 
-const TARGET_WIDTH = 128; 
-const TARGET_HEIGHT = 128;
+const TARGET_WIDTH = 150; 
+const TARGET_HEIGHT = 150;
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const SIZE_BUDGET = 5000; 
 
@@ -15,20 +15,19 @@ async function processImage(buffer) {
     throw new Error(`Image too large`);
   }
 
-  // Grayscale + 128x128 is the "sweet spot" for 5KB
+  // 150x150 Color is the maximum viable resolution for a 5KB budget
   const basePipeline = sharp(buffer)
     .resize(TARGET_WIDTH, TARGET_HEIGHT, {
       fit: "cover",
       position: "centre",
     })
-    .grayscale() // SAVE 30-50% size -> re-invested into quality
     .sharpen({
-      sigma: 1,
-      m1: 2,
-      j1: 2
-    }); // Stronger edge definition
+      sigma: 0.5,
+      m1: 1,
+      j1: 1
+    }); // Moderate sharpening for clarity without adding grain
 
-  let quality = 70; // Start MUCH higher because grayscale is efficient
+  let quality = 50; 
   let processedBuffer;
   
   do {
@@ -37,16 +36,17 @@ async function processImage(buffer) {
       .jpeg({ 
         quality: quality, 
         mozjpeg: true, 
-        chromaSubsampling: '4:4:4', // Best detail for grayscale
+        chromaSubsampling: '4:2:0', // Required for color efficiency at this size
         trellisQuantisation: true,
         overshootDeringing: true,
-        optimizeScans: true
+        optimizeScans: true,
+        quantisationTable: 3 // Optimized for human faces
       })
       .toBuffer();
 
     if (processedBuffer.length <= SIZE_BUDGET) break;
-    quality -= 5;
-  } while (quality > 10);
+    quality -= 3; // Finer steps for color tuning
+  } while (quality > 5);
 
   return processedBuffer;
 }
