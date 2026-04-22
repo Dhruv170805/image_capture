@@ -9,134 +9,167 @@
     <style>
         :root { 
             --primary: #003366; 
-            --bg: #f8fafc; 
-            --text: #1e293b; 
+            --bg: #f1f5f9; 
+            --text: #0f172a; 
             --accent: #3b82f6;
             --success: #10b981;
             --warning: #f59e0b;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --danger: #ef4444;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -6px rgba(0, 0, 0, 0.1);
         }
-        html, body { min-height: 100%; margin: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; line-height: 1.4; }
         
         .navbar {
             background: white;
-            padding: 0.8rem 2rem;
+            padding: 0.6rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             z-index: 100;
-            position: sticky; top: 0;
+            flex-shrink: 0;
         }
-        .navbar img { height: 40px; }
-        .nav-center { font-size: 1.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .navbar img { height: 32px; }
+        .nav-center { font-size: 1.1rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
 
-        .main-content {
+        .dashboard-container {
             flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 1.5rem;
-            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow: hidden;
+            box-sizing: border-box;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
-            box-sizing: border-box;
         }
 
-        .left-col { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
-        .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
-
-        .card { 
-            background: white; 
-            padding: 1.5rem; 
-            border-radius: 16px; 
-            box-shadow: var(--card-shadow); 
-            border: 1px solid rgba(0,0,0,0.03);
-            position: relative;
-        }
-        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
         }
+
         .stat-card {
             background: white;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 16px;
             box-shadow: var(--card-shadow);
-            border-bottom: 4px solid var(--primary);
-            text-align: left;
+            border: 1px solid rgba(255,255,255,0.7);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 80px;
         }
-        .stat-card p { margin: 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-card h2 { margin: 5px 0 0 0; font-size: 2rem; font-weight: 800; color: var(--text); }
-        .stat-card.success-bg { border-bottom-color: var(--success); }
-        .stat-card.accent { border-bottom-color: var(--warning); }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
+        .stat-card.success-bg::after { background: var(--success); }
+        .stat-card.accent::after { background: var(--warning); }
+
+        .stat-card p { margin: 0; color: #64748b; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card h2 { margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
+        .stat-card .detail { margin-top: 5px; font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+
+        .main-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1rem;
+            min-height: 0; /* Important for flex child with overflow */
+        }
+
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .card { 
+            background: white; 
+            padding: 1.2rem; 
+            border-radius: 20px; 
+            box-shadow: var(--card-shadow); 
+            border: 1px solid rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .left-col .card { flex: 1; min-height: 0; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid #f1f5f9;
+            flex-shrink: 0;
+        }
+        
+        h3 { margin: 0; font-size: 1rem; font-weight: 800; color: var(--primary); }
 
         .table-wrap { 
+            flex: 1;
+            overflow-y: auto;
             border-radius: 12px; 
             border: 1px solid #f1f5f9;
-            margin-top: 1rem;
             background: white;
-            overflow-x: auto;
         }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 1rem; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
-        tr:hover { background: #f8fafc; }
+        /* Custom scrollbar for table */
+        .table-wrap::-webkit-scrollbar { width: 6px; }
+        .table-wrap::-webkit-scrollbar-track { background: #f8fafc; }
+        .table-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f8fafc; padding: 0.8rem 1rem; text-align: left; font-weight: 700; color: #475569; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 10; }
+        td { padding: 0.8rem 1rem; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
+        tr:hover td { background: #f8fafc; }
         
-        .loader { width: 14px; height: 14px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: none; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        #status-msg { padding: 1rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; margin-top: 1rem; text-align: center; }
-        .error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
-        .success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-
-        #live-toast {
-            position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
-            background: var(--primary); color: white; padding: 1rem 2rem;
-            border-radius: 50px; font-weight: 700; z-index: 2000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none;
-            animation: slideDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
-            border: 2px solid white;
-        }
-        @keyframes slideDown { from { top: -100px; opacity: 0; } to { top: 25px; opacity: 1; } }
-
-        .pagination-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
-        .page-btn { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #64748b; transition: all 0.2s; }
-        .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: #f0f7ff; }
-        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
         .btn { 
-            background: var(--primary); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 10px; 
+            background: var(--primary); color: white; border: none; padding: 0.6rem 1rem; border-radius: 10px; 
             cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
-            font-size: 0.9rem; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.1); width: 100%;
+            font-size: 0.85rem; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.05); width: 100%;
         }
         .btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn:active:not(:disabled) { transform: translateY(0); }
-        .btn:disabled { background: #cbd5e1; cursor: not-allowed; border-color: transparent; }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
 
-        .input-group { margin-bottom: 1.2rem; text-align: left; }
-        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        input[type="text"], input[type="date"], select { 
-            width: 100%; padding: 0.8rem; border: 2px solid #f1f5f9; border-radius: 10px; 
-            box-sizing: border-box; font-family: inherit; font-weight: 600; color: var(--text);
-            transition: border-color 0.2s;
+        .right-col {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-right: 4px;
         }
-        input:focus, select:focus { border-color: var(--accent); outline: none; background: #fff; }
+        .right-col::-webkit-scrollbar { width: 4px; }
+        .right-col::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        h3 { margin: 0 0 1.2rem 0; font-size: 1.1rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; font-size: 0.7rem; margin-bottom: 0.4rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        @media (max-width: 1100px) {
-            .main-content { grid-template-columns: 1fr; }
-            .right-col { order: -1; }
+        input[type="text"], input[type="date"], select { 
+            width: 100%; padding: 0.6rem 0.8rem; border: 2px solid #f1f5f9; border-radius: 10px; 
+            box-sizing: border-box; font-family: inherit; font-weight: 600; color: var(--text);
+            background: #f8fafc; font-size: 0.85rem;
         }
-        @media (max-width: 480px) {
-            .navbar { padding: 0.8rem 1rem; }
-            .nav-left span { font-size: 0.9rem !important; }
-            .nav-center { font-size: 0.9rem; }
-            .stats-grid { grid-template-columns: 1fr; }
+
+        .pagination-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
+        
+        .page-btn { background: white; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-weight: 700; color: #64748b; cursor: pointer; font-size: 0.75rem; }
+        .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+
+        @media (max-width: 1100px) {
+            html, body { height: auto; overflow: visible; }
+            .dashboard-container { height: auto; overflow: visible; }
+            .main-grid { grid-template-columns: 1fr; height: auto; overflow: visible; }
+            .right-col { height: auto; overflow: visible; }
+            .table-wrap { max-height: 500px; }
         }
     </style>
 </head>
@@ -152,147 +185,152 @@
     </div>
     <div class="nav-center">⚙️ Admin Dashboard</div>
     <div class="nav-right">
-        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">Back to Capture</a>
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem; background: #f1f5f9; padding: 8px 16px; border-radius: 8px;">Back to Capture</a>
     </div>
 </nav>
 
 <div id="live-toast"></div>
 
-<div class="main-content">
-    <div class="left-col">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <p>Total Staff</p>
-                <h2 id="stat-total">0</h2>
-            </div>
-            <div class="stat-card success-bg">
-                <p>Registered</p>
-                <h2 id="stat-registered">0</h2>
-                <div id="stat-details" style="margin-top: 8px; font-size: 0.85rem; color: #64748b;"></div>
-            </div>
-            <div class="stat-card accent">
-                <p>Remaining</p>
-                <h2 id="stat-remaining">0</h2>
-            </div>
+<div class="dashboard-container">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <p>Total Staff</p>
+            <h2 id="stat-total">0</h2>
         </div>
-
-        <div class="card">
-            <h3>Recent Registrations
-                <button id="load-logs-btn" class="page-btn" style="padding: 4px 12px; font-size: 0.75rem;">REFRESH</button>
-            </h3>
-            
-            <button id="download-selected-btn" class="btn" style="margin-bottom: 1rem;" disabled>
-                <span class="loader" id="loader-selected"></span>
-                DOWNLOAD SELECTED (ZIP)
-            </button>
-
-            <div class="table-wrap">
-                <table id="logs-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all"></th>
-                            <th>Type</th>
-                            <th>Employee</th>
-                            <th>Code</th>
-                            <th>Date</th>
-                            <th>Size</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs-body"></tbody>
-                </table>
-            </div>
-
-            <div class="pagination-ctrl">
-                <button id="prev-page" class="page-btn" disabled>PREVIOUS</button>
-                <span id="page-info" style="font-size: 0.85rem; font-weight: 800; color: #64748b;">Page 1</span>
-                <button id="next-page" class="page-btn" disabled>NEXT</button>
-            </div>
+        <div class="stat-card success-bg">
+            <p>Registered</p>
+            <h2 id="stat-registered">0</h2>
+            <div id="stat-details" class="detail"></div>
+        </div>
+        <div class="stat-card accent">
+            <p>Remaining</p>
+            <h2 id="stat-remaining">0</h2>
         </div>
     </div>
 
-    <div class="right-col">
-        <div class="card">
-            <h3>1. Update Employee List (CSV)</h3>
-            <p style="font-size: 0.75rem; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Required: <b>EmployeeCode, Name, Department</b></p>
-            <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.85rem; margin-bottom: 15px; width: 100%;">
-            <button id="upload-csv-btn" class="btn" style="background: #2e7d32;">
-                <span class="loader" id="loader-csv"></span>
-                UPLOAD NEW LIST
-            </button>
-        </div>
-
-        <div class="card">
-            <h3>2. Registration Settings</h3>
-            <div class="input-group">
-                <label>Active Registration Mode</label>
-                <select id="config-mode">
-                    <option value="FACE">Face Capture Only</option>
-                    <option value="PALM">Right Hand Palm Only</option>
-                    <option value="BOTH">Mandatory Both (Face + Palm)</option>
-                </select>
-            </div>
-            <button id="save-config-btn" class="btn">
-                <span class="loader" id="loader-config"></span>
-                APPLY SETTING
-            </button>
-        </div>
-
-        <div class="card">
-            <h3>3. Download Data</h3>
-            <div class="input-group">
-                <label>Filter Type</label>
-                <select id="download-filter-type" onchange="toggleDownloadFilter()">
-                    <option value="all">All Data</option>
-                    <option value="range">From date to date</option>
-                </select>
-            </div>
-            <div id="date-filter-group" style="display: none;">
-                <div class="input-group">
-                    <label>Start Date</label>
-                    <input type="date" id="date-start">
+    <div class="main-grid">
+        <div class="left-col">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Registrations</h3>
+                    <button id="load-logs-btn" class="page-btn" style="background: var(--primary); color: white; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; cursor: pointer;">REFRESH</button>
                 </div>
-                <div class="input-group">
-                    <label>End Date</label>
-                    <input type="date" id="date-end">
+                
+                <button id="download-selected-btn" class="btn" style="margin-bottom: 1.5rem; background: var(--accent);" disabled>
+                    <span class="loader" id="loader-selected"></span>
+                    DOWNLOAD SELECTED (ZIP)
+                </button>
+
+                <div class="table-wrap">
+                    <table id="logs-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all"></th>
+                                <th>Type</th>
+                                <th>Employee</th>
+                                <th>Code</th>
+                                <th>Date</th>
+                                <th>Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-ctrl" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+                    <button id="prev-page" class="page-btn" style="background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-weight: 700; color: #64748b; cursor: pointer;">PREVIOUS</button>
+                    <span id="page-info" style="font-size: 0.85rem; font-weight: 800; color: #64748b;">Page 1</span>
+                    <button id="next-page" class="page-btn" style="background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-weight: 700; color: #64748b; cursor: pointer;">NEXT</button>
                 </div>
             </div>
-            <button id="main-download-btn" class="btn" style="background: #334155;">
-                <span class="loader" id="loader-main-download"></span>
-                DOWNLOAD BIOMETRICS (ZIP)
-            </button>
         </div>
 
-        <div class="card">
-            <h3>4. Report</h3>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; gap: 10px;">
-                    <a href="/api/download/registered-excel" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">Download Excel</a>
-                    <a href="/api/download/registered-csv" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">CSV File</a>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <a href="/api/download/not-registered-excel" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">Download Excel</a>
-                    <a href="/api/download/not-registered-csv" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">CSV File</a>
-                </div>
-                <p style="font-size: 0.7rem; color: #64748b; margin: 0; display: flex; justify-content: space-between;">
-                    <span style="color: #10b981; font-weight: 700;">● Registered Data</span>
-                    <span style="color: #ef4444; font-weight: 700;">● Missing Data</span>
-                </p>
+        <div class="right-col">
+            <div class="card">
+                <h3>1. Update Employee List (CSV)</h3>
+                <p style="font-size: 0.75rem; color: #64748b; margin: 10px 0 15px;">Required: <b>EmployeeCode, Name, Department</b></p>
+                <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.85rem; margin-bottom: 15px; width: 100%;">
+                <button id="upload-csv-btn" class="btn" style="background: #10b981;">
+                    <span class="loader" id="loader-csv"></span>
+                    UPLOAD NEW LIST
+                </button>
             </div>
-        </div>
 
-        <div class="card">
-            <h3>5. Download By Employee</h3>
-            <div class="input-group">
-                <label>Employee Code</label>
-                <input type="text" id="emp-code-input" placeholder="Ex: 1234">
+            <div class="card">
+                <h3>2. Registration Settings</h3>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Active Registration Mode</label>
+                    <select id="config-mode">
+                        <option value="FACE">Face Capture Only</option>
+                        <option value="PALM">Right Hand Palm Only</option>
+                        <option value="BOTH">Mandatory Both (Face + Palm)</option>
+                    </select>
+                </div>
+                <button id="save-config-btn" class="btn">
+                    <span class="loader" id="loader-config"></span>
+                    APPLY SETTING
+                </button>
             </div>
-            <button id="download-emp-btn" class="btn">
-                <span class="loader" id="loader-emp"></span>
-                DOWNLOAD IMAGES
-            </button>
-        </div>
 
-        <div id="status-msg"></div>
+            <div class="card">
+                <h3>3. Download Data</h3>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Filter Type</label>
+                    <select id="download-filter-type" onchange="toggleDownloadFilter()">
+                        <option value="all">All Data</option>
+                        <option value="range">From date to date</option>
+                    </select>
+                </div>
+                <div id="date-filter-group" style="display: none;">
+                    <div class="input-group">
+                        <label>Start Date</label>
+                        <input type="date" id="date-start">
+                    </div>
+                    <div class="input-group">
+                        <label>End Date</label>
+                        <input type="date" id="date-end">
+                    </div>
+                </div>
+                <button id="main-download-btn" class="btn" style="background: #334155;">
+                    <span class="loader" id="loader-main-download"></span>
+                    DOWNLOAD BIOMETRICS (ZIP)
+                </button>
+            </div>
+
+            <div class="card">
+                <h3>4. Report</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                    <div style="display: flex; gap: 10px;">
+                        <a href="/api/download/registered-excel" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">Excel Report</a>
+                        <a href="/api/download/registered-csv" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">CSV List</a>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="/api/download/not-registered-excel" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">Excel Missing</a>
+                        <a href="/api/download/not-registered-csv" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">CSV Missing</a>
+                    </div>
+                    <div style="padding: 10px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
+                        <p style="font-size: 0.7rem; color: #64748b; margin: 0; display: flex; justify-content: space-between;">
+                            <span style="color: #10b981; font-weight: 800;">● REGISTERED DATA</span>
+                            <span style="color: #ef4444; font-weight: 800;">● MISSING DATA</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>5. Download By Employee</h3>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Employee Code</label>
+                    <input type="text" id="emp-code-input" placeholder="Ex: 1234">
+                </div>
+                <button id="download-emp-btn" class="btn" style="background: #334155;">
+                    <span class="loader" id="loader-emp"></span>
+                    DOWNLOAD IMAGES
+                </button>
+            </div>
+
+            <div id="status-msg"></div>
+        </div>
     </div>
 </div>
 
@@ -326,9 +364,16 @@
     }
 
     function setStatus(msg, type) {
+        if (window.statusTimeout) clearTimeout(window.statusTimeout);
         statusMsg.textContent = msg;
         statusMsg.className = type;
-        if (type === 'success') setTimeout(() => { if (statusMsg.textContent === msg) statusMsg.textContent = ''; }, 5000);
+        // Auto-clear both success and error after a delay
+        window.statusTimeout = setTimeout(() => { 
+            if (statusMsg.textContent === msg) {
+                statusMsg.textContent = ''; 
+                statusMsg.className = '';
+            }
+        }, 5000);
     }
 
     async function loadStats() {
@@ -358,7 +403,15 @@
     }
 
     async function fetchLogs(page = 1) {
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const refreshBtn = document.getElementById('load-logs-btn');
+        
         try {
+            if (prevBtn) prevBtn.disabled = true;
+            if (nextBtn) nextBtn.disabled = true;
+            if (refreshBtn) refreshBtn.disabled = true;
+
             currentPage = page;
             const res = await fetch(`/api/upload/logs?page=${page}&limit=${itemsPerPage}`);
             const result = await res.json();
@@ -368,11 +421,17 @@
                 renderTable();
                 updatePaginationUI();
             }
-        } catch (err) { console.error('Logs fetch error', err); }
+        } catch (err) { 
+            console.error('Logs fetch error', err); 
+            updatePaginationUI(); // Re-enable based on state
+        } finally {
+            if (refreshBtn) refreshBtn.disabled = false;
+        }
     }
 
     function renderTable() {
         logsBody.innerHTML = '';
+        selectAllCb.checked = false; // Reset select all on new render
         loadedLogs.forEach(log => {
             const tr = document.createElement('tr');
             
@@ -402,6 +461,7 @@
             `;
             logsBody.appendChild(tr);
         });
+        checkSelection(); // Update bulk download button state
     }
 
     function updatePaginationUI() {
@@ -435,7 +495,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode })
             });
-            if ((await res.json()).success) setStatus('Registration mode updated to ' + mode, 'success');
+            const data = await res.json();
+            if (data.success) {
+                setStatus('Registration mode updated to ' + mode, 'success');
+            } else {
+                setStatus('Update failed: ' + (data.message || 'Unknown error'), 'error');
+            }
         } catch (err) { setStatus('Failed to update mode', 'error'); }
         finally { btn.disabled = false; loader.style.display = 'none'; }
     };
@@ -470,14 +535,21 @@
         try {
             btn.disabled = true; loader.style.display = 'inline-block';
             const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : null });
+            
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Download failed');
+            }
+
             const blob = await res.blob();
             const a = document.createElement('a');
             a.href = window.URL.createObjectURL(blob);
             a.download = filenamePrefix + '.zip';
             a.click();
             setStatus('Download Started', 'success');
-        } catch (err) { setStatus('Download failed', 'error'); }
-        finally { btn.disabled = false; loader.style.display = 'none'; }
+        } catch (err) { 
+            setStatus(err.message || 'Download failed', 'error'); 
+        } finally { btn.disabled = false; loader.style.display = 'none'; }
     }
 
     downloadSelectedBtn.onclick = () => {
@@ -500,7 +572,7 @@
 
     document.getElementById('download-emp-btn').onclick = () => {
         const code = document.getElementById('emp-code-input').value.trim();
-        if (!code) return;
+        if (!code) return setStatus('Enter an employee code', 'error');
         triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee_' + code);
     };
 
