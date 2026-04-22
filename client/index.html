@@ -141,6 +141,14 @@
 
         .loader { width: 22px; height: 22px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: none; animation: rotation 1s linear infinite; }
         @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Success Animation */
+        .success-checkmark { width: 80px; height: 80px; margin: 0 auto 1.5rem; }
+        .check-icon { width: 80px; height: 80px; position: relative; border-radius: 50%; box-sizing: content-box; border: 4px solid var(--success); }
+        .check-icon::before { content: ''; position: absolute; width: 3px; height: 45px; background-color: var(--success); left: 48px; top: 18px; transform: rotate(45deg); animation: icon-line-long 0.75s; }
+        .check-icon::after { content: ''; position: absolute; width: 3px; height: 25px; background-color: var(--success); left: 21px; top: 38px; transform: rotate(-45deg); animation: icon-line-tip 0.75s; }
+        @keyframes icon-line-tip { 0% { width: 0; left: 1px; top: 19px; } 100% { width: 3px; left: 21px; top: 38px; } }
+        @keyframes icon-line-long { 0% { width: 0; right: 46px; top: 54px; } 100% { width: 3px; left: 48px; top: 18px; } }
     </style>
 </head>
 <body>
@@ -149,7 +157,7 @@
         <div class="nav-left"><img src="logo.png" alt="Logo"></div>
         <div class="nav-center">NG P&P Registration</div>
         <div class="nav-right">
-            <a href="palm.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">SWITCH TO PALM</a>
+            <span id="active-mode-label" style="background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">MODE: FACE</span>
         </div>
     </nav>
 
@@ -166,17 +174,17 @@
             
             <!-- VERIFICATION -->
             <div id="stage-verify" class="step active">
-                <h1 style="margin:0 0 0.5rem 0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Identity Verification</h1>
-                <p style="color: #64748b; font-weight: 700; font-size: 1.1rem; margin-bottom: 2rem;">Enter Employee Code to start</p>
+                <h1 style="margin:0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Identity Verification</h1>
+                <h2 style="margin: 0.5rem 0 2rem; color: #64748b; font-weight: 700; font-size: 1.4rem;">એમ્પ્લોયી વેરીફીકેશન</h2>
                 
                 <div style="text-align: left;">
-                    <label style="font-weight: 800; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-left: 5px;">Employee Code</label>
+                    <label style="font-weight: 800; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-left: 5px;">કર્મચારી કોડ / Employee Code</label>
                     <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
                 </div>
 
                 <button id="verify-btn" class="btn">
                     <span class="loader" id="verify-loader"></span>
-                    <span>Continue Registration</span>
+                    <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.8em; font-weight: 500;">CONTINUE REGISTRATION</small></span>
                 </button>
             </div>
 
@@ -184,15 +192,15 @@
             <div id="stage-face" class="step">
                 <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
                     <div style="display: flex; justify-content: flex-start;">
-                        <button id="face-back-btn" class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="goBack()">⬅️ BACK</button>
+                        <button id="face-back-btn" class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="goBack()">⬅️ પાછા જાઓ / BACK</button>
                     </div>
                     <div style="background: white; padding: 1.5rem; border-radius: 24px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1); text-align: center;">
-                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee</span>
+                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee / કર્મચારીનું નામ</span>
                         <p id="face-user-name" style="margin:0; font-weight: 900; font-size: 1.8rem; color: var(--primary); line-height: 1.2;"></p>
                     </div>
                 </div>
-                <h2 style="margin:0; font-weight: 900; color: var(--primary); font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px;">Scan Face</h2>
-                <p id="face-stage-label" style="color:#64748b; font-weight:700; margin-bottom:1.5rem;">Face Identity</p>
+                <h2 style="margin:0; font-weight: 900; color: var(--primary); font-size: 1.6rem; text-transform: uppercase;">તમારો ચહેરો સ્કેન કરો</h2>
+                <p id="face-stage-label" style="color:#64748b; font-weight:800; margin-bottom:1.5rem; font-size: 1.1rem;">Face Identity</p>
 
                 <div id="camera-wrap">
                     <div class="scan-line"></div>
@@ -201,7 +209,7 @@
 
                 <button id="face-capture-btn" class="btn btn-accent">
                     <span class="loader" id="face-loader"></span>
-                    <span>Capture Identity 📸</span>
+                    <span>ચહેરો સ્કેન કરો <br><small style="font-size:0.8em; font-weight:500;">CAPTURE IDENTITY 📸</small></span>
                 </button>
             </div>
 
@@ -209,18 +217,18 @@
             <div id="stage-palm" class="step">
                 <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
                     <div style="display: flex; justify-content: flex-start;">
-                        <button id="palm-back-btn" class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="goBack()">⬅️ BACK</button>
+                        <button id="palm-back-btn" class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="goBack()">⬅️ પાછા જાઓ / BACK</button>
                     </div>
                     <div style="background: white; padding: 1.5rem; border-radius: 24px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1); text-align: center;">
-                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee</span>
+                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee / કર્મચારીનું નામ</span>
                         <p id="palm-user-name" style="margin:0; font-weight: 900; font-size: 1.8rem; color: var(--primary); line-height: 1.2;"></p>
                     </div>
                 </div>
-                <h2 style="margin:0; font-weight: 900; color: var(--primary); font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px;">Scan Right Palm</h2>
-                <p id="palm-stage-label" style="color:#64748b; font-weight:700; margin-bottom:1.5rem;">Palm Biometric</p>
+                <h2 style="margin:0; font-weight: 900; color: var(--primary); font-size: 1.6rem; text-transform: uppercase;">જમણા હાથની હથેળી સ્કેન કરો</h2>
+                <p id="palm-stage-label" style="color:#64748b; font-weight:800; margin-bottom:1.5rem; font-size: 1.1rem;">Palm Biometric</p>
                 
                 <div id="camera-wrap" class="active">
-                    <div id="auto-capture-status">STABILIZING...</div>
+                    <div id="auto-capture-status">સ્થિર કરો... STABILIZING...</div>
                     <div class="scan-line"></div>
                     <video id="palm-video" autoplay playsinline></video>
                     <canvas id="palm-canvas"></canvas>
@@ -228,13 +236,13 @@
                         <svg class="hand-svg" viewBox="0 0 200 250">
                             <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
                         </svg>
-                        <p style="color:white; font-weight:900; font-size: 1.1rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">Align Full Right Hand</p>
+                        <p style="color:white; font-weight:900; font-size: 1.1rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">જમણો હાથ ગોઠવો<br>Align Full Right Hand</p>
                     </div>
                 </div>
 
                 <button id="palm-capture-btn" class="btn btn-accent" disabled>
                     <span class="loader" id="palm-loader"></span>
-                    <span>Ready to Capture 🖐️</span>
+                    <span>સ્કેન કરવા માટે તૈયાર <br><small style="font-size:0.8em; font-weight:500;">READY TO CAPTURE 🖐️</small></span>
                 </button>
             </div>
 
@@ -243,10 +251,11 @@
                 <div class="success-checkmark">
                     <div class="check-icon"></div>
                 </div>
-                <h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2rem;">Registration Complete</h1>
-                <p style="color: #64748b; font-weight: 700; margin: 1rem 0 2.5rem;">Your biometric profile has been successfully secured.</p>
+                <h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2.2rem;">નોંધણી સફળ!</h1>
+                <h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Registration Complete</h2>
+                <p style="color: #64748b; font-weight: 700; margin: 1rem 0 2.5rem; font-size: 1.1rem;">તમારી બાયોમેટ્રિક પ્રોફાઇલ સફળતાપૂર્વક સાચવવામાં આવી છે.<br>Your biometric profile has been successfully secured.</p>
                 <button class="btn" onclick="location.reload()">
-                    <span>Register Another</span>
+                    <span>બીજી નોંધણી કરો <br><small style="font-size:0.8em; font-weight:500;">REGISTER ANOTHER</small></span>
                 </button>
             </div>
 
@@ -302,6 +311,9 @@
             const faceLabel = document.getElementById('face-stage-label');
             const palmLabel = document.getElementById('palm-stage-label');
             const palmBackBtn = document.getElementById('palm-back-btn');
+            const modeBadge = document.getElementById('active-mode-label');
+
+            if (modeBadge) modeBadge.textContent = "MODE: " + currentMode;
 
             if (currentMode === "BOTH") {
                 if (faceLabel) faceLabel.textContent = "Face Identity";
@@ -364,11 +376,11 @@
                     employeeCode = result.data.EmployeeCode;
                     employeeName = result.data.Name;
                     if (currentMode === "FACE" || currentMode === "BOTH") {
-                        document.getElementById('face-user-name').textContent = `👤 ${employeeName}`;
+                        document.getElementById('face-user-name').textContent = employeeName;
                         showStage("FACE");
                         startCamera('face-video');
                     } else {
-                        document.getElementById('palm-user-name').textContent = `👤 ${employeeName}`;
+                        document.getElementById('palm-user-name').textContent = employeeName;
                         showStage("PALM");
                         startCamera('palm-video', true);
                     }
@@ -397,7 +409,7 @@
                 if ((await res.json()).success) {
                     if (currentMode === "BOTH") {
                         stopCamera();
-                        document.getElementById('palm-user-name').textContent = `👤 ${employeeName}`;
+                        document.getElementById('palm-user-name').textContent = employeeName;
                         showStage("PALM");
                         startCamera('palm-video', true);
                     } else { stopCamera(); showStage("THANKS"); }

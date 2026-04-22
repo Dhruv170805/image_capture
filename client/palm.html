@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="gu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Palm Registration | Right Hand</title>
-    <!-- MediaPipe Hands -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -21,7 +21,7 @@
         }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-family: 'Outfit', sans-serif; 
             margin: 0; 
             background-color: #f8fafc;
             background-image: var(--bg-gradient);
@@ -68,7 +68,7 @@
             border: none; 
             padding: 1.2rem 2rem; 
             border-radius: 16px; 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
             font-weight: 800; 
             cursor: pointer; 
             width: 100%; 
@@ -129,6 +129,14 @@
             display: none; font-weight: 800; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
         }
+
+        /* Success Animation */
+        .success-checkmark { width: 80px; height: 80px; margin: 0 auto 1.5rem; }
+        .check-icon { width: 80px; height: 80px; position: relative; border-radius: 50%; box-sizing: content-box; border: 4px solid var(--success); }
+        .check-icon::before { content: ''; position: absolute; width: 3px; height: 45px; background-color: var(--success); left: 48px; top: 18px; transform: rotate(45deg); animation: icon-line-long 0.75s; }
+        .check-icon::after { content: ''; position: absolute; width: 3px; height: 25px; background-color: var(--success); left: 21px; top: 38px; transform: rotate(-45deg); animation: icon-line-tip 0.75s; }
+        @keyframes icon-line-tip { 0% { width: 0; left: 1px; top: 19px; } 100% { width: 3px; left: 21px; top: 38px; } }
+        @keyframes icon-line-long { 0% { width: 0; right: 46px; top: 54px; } 100% { width: 3px; left: 48px; top: 18px; } }
     </style>
 </head>
 <body>
@@ -137,7 +145,7 @@
     <div class="nav-left"><img src="logo.png" alt="Logo"></div>
     <div class="nav-center">Palm Registration</div>
     <div class="nav-right">
-        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">BACK TO FACE</a>
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">Back to Face</a>
     </div>
 </nav>
 
@@ -146,16 +154,16 @@
         
         <!-- VERIFY -->
         <div id="stage-verify" class="step active">
-            <h1 style="margin:0 0 0.5rem 0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Identity Verification</h1>
-            <p style="color: #64748b; font-weight: 700; font-size: 1.1rem; margin-bottom: 2rem;">Enter Employee Code to start</p>
+            <h1 style="margin:0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Identity Verification</h1>
+            <h2 style="margin: 0.5rem 0 2rem; color: #64748b; font-weight: 700; font-size: 1.4rem;">એમ્પ્લોયી વેરીફીકેશન</h2>
             
             <div style="text-align: left;">
-                <label style="font-weight: 800; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-left: 5px;">Employee Code</label>
+                <label style="font-weight: 800; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-left: 5px;">કર્મચારી કોડ / Employee Code</label>
                 <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
             </div>
 
             <button class="btn" id="start-btn" onclick="startModule()">
-                <span>Open Camera</span>
+                <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.8em; font-weight: 500;">CONTINUE REGISTRATION</small></span>
             </button>
         </div>
 
@@ -163,10 +171,10 @@
         <div id="stage-capture" class="step">
             <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
                 <div style="display: flex; justify-content: flex-start;">
-                    <button class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="resetToModal()">⬅️ BACK</button>
+                    <button class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="resetToModal()">⬅️ પાછા જાઓ / BACK</button>
                 </div>
                 <div style="background: white; padding: 1.5rem; border-radius: 24px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1); text-align: center;">
-                    <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee</span>
+                    <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee / કર્મચારીનું નામ</span>
                     <p id="emp-name-display" style="margin:0; font-weight: 900; font-size: 1.8rem; color: var(--primary); line-height: 1.2;"></p>
                 </div>
             </div>
@@ -181,12 +189,25 @@
                     <svg class="hand-svg" viewBox="0 0 200 250">
                         <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
                     </svg>
-                    <p style="color:white; font-weight:900; font-size: 1.1rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">Align Full Right Hand</p>
+                    <p style="color:white; font-weight:900; font-size: 1.1rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">જમણો હાથ ગોઠવો<br>Align Full Right Hand</p>
                 </div>
             </div>
 
             <button id="capture-btn" class="btn-capture" disabled>
                 <div style="width: 70px; height: 70px; border-radius: 50%; background: white;"></div>
+            </button>
+        </div>
+
+        <!-- THANK YOU -->
+        <div id="stage-thanks" class="step">
+            <div class="success-checkmark">
+                <div class="check-icon"></div>
+            </div>
+            <h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2.2rem;">નોંધણી સફળ!</h1>
+            <h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Registration Complete</h2>
+            <p style="color: #64748b; font-weight: 700; margin: 1rem 0 2.5rem; font-size: 1.1rem;">તમારી બાયોમેટ્રિક પ્રોફાઇલ સફળતાપૂર્વક સાચવવામાં આવી છે.<br>Your biometric profile has been successfully secured.</p>
+            <button class="btn" onclick="location.reload()">
+                <span>બીજી નોંધણી કરો <br><small style="font-size:0.8em; font-weight:500;">REGISTER ANOTHER</small></span>
             </button>
         </div>
 
@@ -230,7 +251,7 @@
             const result = await res.json();
             
             if (result.success) {
-                nameDisplay.textContent = `👤 ${result.data.Name}`;
+                nameDisplay.textContent = result.data.Name;
                 showStage('capture');
                 initCamera();
             } else {
@@ -261,120 +282,70 @@
 
     function onResults(results) {
         if (!cameraActive) return;
-        
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        
-        // Default state
         isReady = false;
-        instruction.textContent = "Show your RIGHT HAND to the camera";
-        instruction.style.color = "white";
-        guideBox.classList.remove('valid', 'detected');
+        instruction.textContent = "Show your RIGHT HAND / હાથ બતાવો";
+        guideBox.classList.remove('valid');
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            // Hand detected!
-            guideBox.classList.add('detected');
-            
-            for (const landmarks of results.multiHandLandmarks) {
-                // Draw dots so user knows it's working
-                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-                drawLandmarks(canvasCtx, landmarks, {color: '#FFFFFF', lineWidth: 1, radius: 2});
+            const handedness = results.multiHandedness[0];
+            if (handedness.label === "Left") { // Mirrored
+                isReady = true;
+                instruction.textContent = "READY TO CAPTURE / નોંધણી માટે તૈયાર";
+                guideBox.classList.add('valid');
+                drawConnectors(canvasCtx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color: '#10b981', lineWidth: 3});
+                drawLandmarks(canvasCtx, results.multiHandLandmarks[0], {color: '#FFFFFF', lineWidth: 2, radius: 3});
             }
-
-            // Any hand in frame = Ready (Maximum permissiveness)
-            isReady = true;
-            instruction.textContent = "HAND DETECTED - READY TO CAPTURE";
-            instruction.style.color = "#00c851";
-            guideBox.classList.add('valid');
         }
-
         captureBtn.disabled = !isReady;
-        if (isReady) {
-            captureBtn.classList.add('ready');
-            captureBtn.style.opacity = "1";
-        } else {
-            captureBtn.classList.remove('ready');
-            captureBtn.style.opacity = "0.5";
-        }
-        
+        if (isReady) captureBtn.classList.add('ready'); else captureBtn.classList.remove('ready');
         canvasCtx.restore();
     }
 
-    const hands = new Hands({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-    });
-
-    hands.setOptions({
-        maxNumHands: 2,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
-    });
+    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5 });
     hands.onResults(onResults);
 
     async function initCamera() {
         try {
             activeCameraInstance = new Camera(videoElement, {
-                onFrame: async () => {
-                    await hands.send({ image: videoElement });
-                },
-                width: 1280,
-                height: 720
+                onFrame: async () => { await hands.send({ image: videoElement }); },
+                width: 1280, height: 720
             });
-            
             await activeCameraInstance.start();
             cameraActive = true;
-            console.log("Camera started successfully");
-            
             videoElement.addEventListener('loadedmetadata', () => {
                 canvasElement.width = videoElement.videoWidth;
                 canvasElement.height = videoElement.videoHeight;
             });
-        } catch (err) {
-            console.error("Camera Error:", err);
-            alert("Error: " + err.message + ". Please ensure camera permissions are granted.");
-            location.reload();
-        }
+        } catch (err) { alert("Camera Error"); location.reload(); }
     }
 
     captureBtn.onclick = async () => {
         if (!isReady) return;
-
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = videoElement.videoWidth;
         tempCanvas.height = videoElement.videoHeight;
         const ctx = tempCanvas.getContext('2d');
-        
-        ctx.translate(tempCanvas.width, 0);
-        ctx.scale(-1, 1);
+        ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1);
         ctx.drawImage(videoElement, 0, 0);
-        
         const imageData = tempCanvas.toDataURL('image/jpeg', 0.85);
-
         try {
             captureBtn.disabled = true;
-            instruction.textContent = "Processing & Saving...";
-            
+            instruction.textContent = "Processing... / પ્રક્રિયા ચાલુ છે...";
             const res = await fetch('/api/palm/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ empCode: employeeCode, image: imageData })
             });
-
-            const result = await res.json();
-            if (result.success) {
-                showToast(`Success! Right palm registered.`, 'success');
-                setTimeout(() => window.location.href = 'index.html', 2000);
-            } else {
-                showToast(result.message, 'error');
-                captureBtn.disabled = false;
-            }
-        } catch (err) {
-            showToast("Network Error", "error");
-            captureBtn.disabled = false;
-        }
+            if ((await res.json()).success) {
+                showToast(`Success!`, 'success');
+                if (activeCameraInstance) activeCameraInstance.stop();
+                showStage('thanks');
+            } else { showToast("Failed", 'error'); captureBtn.disabled = false; }
+        } catch (err) { showToast("Network Error", "error"); captureBtn.disabled = false; }
     };
 </script>
-
 </body>
 </html>
