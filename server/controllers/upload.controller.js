@@ -89,8 +89,14 @@ const Employee = require("../models/Employee");
 async function downloadAll(req, res) {
   try {
     const archive = archiver("zip", { zlib: { level: 5 } });
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    res.attachment(`employee_captures_${timestamp}.zip`);
+    
+    // Use IST for filename
+    const now = new Date();
+    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const pad = (n) => n.toString().padStart(2, "0");
+    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
+    
+    res.attachment(`full_backup_${timestamp}.zip`);
 
     archive.on("error", (err) => { throw err; });
     archive.pipe(res);
@@ -102,12 +108,18 @@ async function downloadAll(req, res) {
 
     for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
       if (doc.ImageData) {
+        // Ensure .jpg extension
+        let fileName = doc.FileName || `${doc.EmployeeCode}.jpg`;
+        if (fileName.toLowerCase().endsWith(".jpeg")) {
+          fileName = fileName.slice(0, -5) + ".jpg";
+        }
+
         // Add image to ZIP
-        archive.append(doc.ImageData, { name: `images/${doc.FileName}` });
+        archive.append(doc.ImageData, { name: `images/${fileName}` });
         
-        // Add row to CSV Manifest
+        // Add row to CSV Manifest in IST
         const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
-        csvContent += `"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${doc.FileName}","${istTime}"\n`;
+        csvContent += `"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${istTime}"\n`;
       }
     }
 

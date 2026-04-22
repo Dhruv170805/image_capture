@@ -33,20 +33,26 @@ async function streamImagesToZip(res, query, zipFilename) {
   archive.pipe(res);
 
   let count = 0;
-  let manifestCSV = "EmployeeCode,EmployeeName,Department,FileName,CapturedAt\n";
+  let manifestCSV = "EmployeeCode,EmployeeName,Department,FileName,CapturedAt_IST\n";
 
   // Process documents one by one without loading all into memory
   for (let doc = await cursor.next(); doc != null; doc = await cursor.next()) {
     if (doc.ImageData && doc.EmployeeCode) {
       // Group images by EmployeeCode folder inside the ZIP
       const folderName = doc.EmployeeCode.toUpperCase();
-      const fileName = doc.FileName || `image_${doc._id}.jpg`;
+      // Ensure .jpg extension
+      let fileName = doc.FileName || `${folderName}.jpg`;
+      if (fileName.toLowerCase().endsWith(".jpeg")) {
+        fileName = fileName.slice(0, -5) + ".jpg";
+      }
       
       // Append binary buffer to ZIP
       archive.append(doc.ImageData, { name: `${folderName}/${fileName}` });
       
-      // Add to manifest
-      const capturedAt = doc.CapturedAt ? new Date(doc.CapturedAt).toISOString() : "N/A";
+      // Add to manifest in IST
+      const capturedAt = doc.CapturedAt 
+        ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) 
+        : "N/A";
       manifestCSV += `"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${capturedAt}"\n`;
       
       count++;
