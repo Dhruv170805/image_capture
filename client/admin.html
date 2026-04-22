@@ -3,79 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image download | Admin</title>
+    <title>Admin Dashboard | Biometric System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root { --primary: #003366; --bg: #f4f7f9; --text: #333; }
-        html, body { height: 100%; margin: 0; overflow: hidden; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; flex-direction: column; color: var(--text); }
+        :root { 
+            --primary: #003366; 
+            --bg: #f8fafc; 
+            --text: #1e293b; 
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        html, body { height: 100%; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
         
         .navbar {
             background: white;
-            padding: 0.5rem 2rem;
+            padding: 0.8rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             z-index: 100;
             flex-shrink: 0;
         }
-        .navbar img { height: 35px; }
-        .nav-left, .nav-right { flex: 1; display: flex; align-items: center; }
-        .nav-center { flex: 2; font-size: 1.1rem; font-weight: 700; color: var(--primary); text-align: center; }
-        .nav-right { justify-content: flex-end; }
+        .navbar img { height: 40px; }
+        .nav-center { font-size: 1.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
 
         .main-content {
             flex: 1;
             display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 1rem;
-            padding: 1rem;
-            overflow: hidden;
-            max-width: 1400px;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1600px;
             margin: 0 auto;
             width: 100%;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
-        .left-col { display: flex; flex-direction: column; gap: 1rem; overflow: hidden; }
-        .right-col { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
-
-        .card { background: white; padding: 1.2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .card { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 16px; 
+            box-shadow: var(--card-shadow); 
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
         
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         .stat-card {
-            background: var(--primary);
-            color: white;
-            padding: 0.8rem;
-            border-radius: 10px;
-            text-align: center;
+            background: white;
+            padding: 1.2rem;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            border-bottom: 4px solid var(--primary);
+            text-align: left;
         }
-        .stat-card h2 { margin: 0; font-size: 1.5rem; }
-        .stat-card p { margin: 0; opacity: 0.9; font-size: 0.8rem; font-weight: 600; }
-        .stat-card.accent { background: #ff9900; }
-        .stat-card.success-bg { background: #2e7d32; }
+        .stat-card p { margin: 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card h2 { margin: 5px 0 0 0; font-size: 2rem; font-weight: 800; color: var(--text); }
+        .stat-card.success-bg { border-bottom-color: var(--success); }
+        .stat-card.accent { border-bottom-color: var(--warning); }
 
-        h1 { margin: 0 0 0.5rem 0; font-size: 1.4rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        h3 { margin: 0 0 1rem 0; font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-        
-        .btn { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
-        .btn:hover { background: #002244; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
-        
-        .input-group { margin-bottom: 1rem; }
-        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 0.3rem; font-weight: 600; }
-        input[type="text"], input[type="date"] { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-
-        .table-wrap { flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; margin-top: 0.5rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { text-align: left; padding: 0.6rem; border-bottom: 1px solid #eee; }
-        th { background: #f9f9f9; position: sticky; top: 0; z-index: 10; }
+        .table-wrap { 
+            flex: 1; 
+            overflow-y: auto; 
+            border-radius: 12px; 
+            border: 1px solid #f1f5f9;
+            margin-top: 1rem;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; color: #475569; position: sticky; top: 0; border-bottom: 2px solid #f1f5f9; }
+        td { padding: 1rem; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
+        tr:hover { background: #f8fafc; }
+...
         
         .loader { width: 14px; height: 14px; border: 2px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: none; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -502,12 +511,12 @@
 
             const tdType = document.createElement('td');
             const type = log.BiometricType || 'FACE';
-            tdType.innerHTML = `<span style="padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; background: ${type === 'FACE' ? '#e3f2fd' : '#f1f8e9'}; color: ${type === 'FACE' ? '#1565c0' : '#33691e'};">${type}</span>`;
+            tdType.innerHTML = `<span style="padding: 4px 10px; border-radius: 50px; font-size: 0.65rem; font-weight: 800; background: ${type === 'FACE' ? '#dbeafe' : '#d1fae5'}; color: ${type === 'FACE' ? '#1e40af' : '#065f46'}; letter-spacing: 0.5px;">${type}</span>`;
 
-            const tdName = document.createElement('td'); tdName.textContent = log.EmployeeName;
-            const tdCode = document.createElement('td'); tdCode.textContent = log.EmployeeCode;
-            const tdDate = document.createElement('td'); tdDate.textContent = new Date(log.CapturedAt).toLocaleString();
-            const tdSize = document.createElement('td'); tdSize.textContent = (log.FileSizeBytes / 1024).toFixed(1) + ' KB';
+            const tdName = document.createElement('td'); tdName.textContent = log.EmployeeName; tdName.style.fontWeight = "700";
+            const tdCode = document.createElement('td'); tdCode.textContent = log.EmployeeCode; tdCode.style.color = "#64748b"; tdCode.style.fontWeight = "600";
+            const tdDate = document.createElement('td'); tdDate.textContent = new Date(log.CapturedAt).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+            const tdSize = document.createElement('td'); tdSize.textContent = (log.FileSizeBytes / 1024).toFixed(1) + ' KB'; tdSize.style.color = "#94a3b8";
 
             tr.append(tdCb, tdType, tdName, tdCode, tdDate, tdSize);
             logsBody.appendChild(tr);
