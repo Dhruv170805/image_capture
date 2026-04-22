@@ -17,6 +17,8 @@ const { connectDB } = require("./config/db");
 const employeeRoutes = require("./routes/employee.routes");
 const uploadRoutes = require("./routes/upload.routes");
 const downloadRoutes = require("./routes/download.routes");
+const palmRoutes = require("./routes/palm.routes");
+const configRoutes = require("./routes/config.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -73,6 +75,8 @@ app.use(globalLimiter);
 app.use("/api/employee", ensureDB, employeeRoutes);
 app.use("/api/upload", ensureDB, uploadLimiter, uploadRoutes);
 app.use("/api/download", ensureDB, downloadRoutes);
+app.use("/api/palm", ensureDB, palmRoutes);
+app.use("/api/config", ensureDB, configRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({

@@ -122,7 +122,7 @@
         </div>
 
         <div class="card" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
-            <h3>1. Recent Captures</h3>
+            <h3>Recent Registrations</h3>
             <div style="display: flex; gap: 10px; margin-bottom: 0.5rem;">
                 <button id="load-logs-btn" class="btn">Refresh List</button>
                 <button id="download-selected-btn" class="btn" disabled>
@@ -149,7 +149,23 @@
     </div>
 
     <div class="right-col">
-        <h1>📦 Image download</h1>
+        <h1>⚙️ Admin Dashboard</h1>
+
+        <div class="card" style="border-left: 5px solid var(--primary);">
+            <h3>1. Registration Settings</h3>
+            <div class="input-group">
+                <label>Active Registration Mode</label>
+                <select id="config-mode" style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #ccc; font-weight: bold;">
+                    <option value="FACE">Face Capture Only</option>
+                    <option value="PALM">Right Hand Palm Only</option>
+                    <option value="BOTH">Mandatory Both (Face + Palm)</option>
+                </select>
+            </div>
+            <button id="save-config-btn" class="btn" style="width: 100%; background: var(--primary);">
+                <span class="loader" id="loader-config"></span>
+                Apply Global Setting
+            </button>
+        </div>
 
         <div class="card">
             <h3>2. Reports (Excel/CSV)</h3>
@@ -406,6 +422,46 @@
         const code = document.getElementById('emp-code-input').value.trim();
         if (!code) return setStatus('Enter an employee code.', 'error');
         triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee');
+    });
+
+    // Load Config
+    async function loadConfig() {
+        try {
+            const res = await fetch('/api/config/registration-mode');
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('config-mode').value = data.mode;
+            }
+        } catch (err) {
+            console.error('Failed to load config', err);
+        }
+    }
+
+    loadConfig();
+
+    document.getElementById('save-config-btn').addEventListener('click', async () => {
+        const mode = document.getElementById('config-mode').value;
+        const btn = document.getElementById('save-config-btn');
+        const loader = document.getElementById('loader-config');
+
+        try {
+            btn.disabled = true;
+            loader.style.display = 'inline-block';
+            const res = await fetch('/api/config/update-mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setStatus('Registration mode updated to ' + mode, 'success');
+            }
+        } catch (err) {
+            setStatus('Failed to update mode', 'error');
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
     });
 
 </script>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palm Registration | Right Hand</title>
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <style>
+        :root { --primary: #003366; --invalid: #ff4444; --valid: #00c851; --warning: #ffbb33; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .header { background: white; color: var(--primary); padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .header img { height: 35px; }
+
+        .camera-container { position: relative; flex: 1; display: flex; justify-content: center; align-items: center; background: #111; overflow: hidden; }
+        video { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
+
+        /* Palm Guide Silhouette Overlay */
+        .guide-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            height: 440px;
+            border: 3px dashed var(--invalid);
+            border-radius: 30px;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            z-index: 10;
+        }
+        .guide-overlay.valid { border-color: var(--valid); border-style: solid; background: rgba(0,200,81,0.15); box-shadow: 0 0 30px rgba(0,200,81,0.3); }
+        .guide-overlay.detected { border-color: var(--warning); }
+
+        /* Professional Hand Silhouette SVG */
+        .hand-svg {
+            width: 280px;
+            height: 380px;
+            fill: rgba(255,255,255,0.05);
+            stroke: rgba(255,255,255,0.6);
+            stroke-width: 2;
+            transition: all 0.3s;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+        .valid .hand-svg { 
+            stroke: var(--valid); 
+            stroke-width: 4; 
+            fill: rgba(0,200,81,0.1);
+            filter: drop-shadow(0 0 20px rgba(0,200,81,0.4));
+        }
+
+        .controls { position: absolute; bottom: 2rem; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1rem; z-index: 20; }
+        .instruction { background: rgba(0,0,0,0.85); padding: 0.8rem 2rem; border-radius: 40px; font-weight: 800; font-size: 1.2rem; border: 2px solid rgba(255,255,255,0.3); color: white; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-capture {
+            width: 85px; height: 85px; border-radius: 50%; border: 6px solid white;
+            background: rgba(255,255,255,0.2); cursor: pointer; display: flex; justify-content: center; align-items: center;
+            transition: all 0.3s;
+        }
+        .btn-capture:disabled { opacity: 0.2; cursor: not-allowed; transform: scale(0.9); }
+        .btn-capture.ready { background: var(--valid); border-color: white; transform: scale(1.1); box-shadow: 0 0 20px var(--valid); }
+
+        #emp-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000; display: flex;
+            justify-content: center; align-items: center;
+        }
+        .modal-content { background: white; color: black; padding: 2.5rem; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        input { width: 100%; padding: 1rem; margin: 1.5rem 0; border: 2px solid #eee; border-radius: 12px; font-size: 1.2rem; text-align: center; font-weight: bold; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); outline: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 1rem; border-radius: 12px; width: 100%; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #002244; }
+
+        #status-toast {
+            position: fixed; top: 2rem; left: 50%; transform: translateX(-50%);
+            padding: 1rem 2rem; border-radius: 12px; z-index: 2000;
+            display: none; font-weight: 800; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div id="emp-modal">
+    <div class="modal-content">
+        <img src="logo.png" alt="Logo" style="height: 50px; margin-bottom: 1rem;">
+        <h2 style="margin:0; color: var(--primary);">Palm Registration</h2>
+        <p style="color: #666; margin-top: 5px;">Enter Employee Code to start</p>
+        <input type="text" id="emp-code" placeholder="EX: 1234" autofocus>
+        <button class="btn" onclick="startModule()">OPEN CAMERA</button>
+        <a href="index.html" style="display:block; text-align:center; margin-top:1.5rem; color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600;">Back to Face Capture</a>
+    </div>
+</div>
+
+<nav class="header">
+    <div style="flex: 1;"><img src="logo.png" alt="Logo"></div>
+    <div style="flex: 2; text-align: center; color: var(--primary); font-weight: 800; font-size: 1.2rem;">RIGHT PALM CAPTURE</div>
+    <div style="flex: 1; display: flex; justify-content: flex-end; gap: 15px;">
+        <a href="index.html" style="color: #666; text-decoration: none; font-weight: 700; font-size: 0.9rem;">FACE</a>
+        <a href="palm.html" style="color: var(--primary); text-decoration: none; font-weight: 700; font-size: 0.9rem; border-bottom: 2px solid var(--primary);">PALM</a>
+    </div>
+</nav>
+
+<div class="camera-container">
+    <video id="input_video" playsinline></video>
+    <canvas id="output_canvas"></canvas>
+    
+    <div class="guide-overlay" id="guide-box">
+        <svg class="hand-svg" viewBox="0 0 200 250">
+            <!-- Professional Right Hand Silhouette with Thumb and Fingers -->
+            <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
+        </svg>
+        <p style="text-align:center; font-size: 1rem; font-weight: 800; margin-top: 15px; color: white; text-shadow: 2px 2px 5px black;">FULL RIGHT HAND</p>
+    </div>
+
+    <div class="controls">
+        <div class="instruction" id="instruction-text">Initializing Camera...</div>
+        <button id="capture-btn" class="btn-capture" disabled title="Align hand to capture">
+            <div style="width: 65px; height: 65px; border-radius: 50%; background: white; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);"></div>
+        </button>
+    </div>
+</div>
+
+<div id="status-toast"></div>
+
+<script>
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const guideBox = document.getElementById('guide-box');
+    const instruction = document.getElementById('instruction-text');
+    const captureBtn = document.getElementById('capture-btn');
+    const statusToast = document.getElementById('status-toast');
+
+    let employeeCode = "";
+    let isReady = false;
+    let cameraActive = false;
+
+    async function startModule() {
+        const input = document.getElementById('emp-code');
+        employeeCode = input.value.trim().toUpperCase();
+        if (!employeeCode) return alert("Please enter employee code.");
+        
+        document.getElementById('emp-modal').style.display = 'none';
+        instruction.textContent = "Requesting Camera Access...";
+        initCamera();
+    }
+
+    function showToast(msg, type) {
+        statusToast.textContent = msg;
+        statusToast.style.display = 'block';
+        statusToast.style.background = type === 'success' ? '#00c851' : '#ff4444';
+        setTimeout(() => statusToast.style.display = 'none', 3000);
+    }
+
+    function onResults(results) {
+        if (!cameraActive) return;
+        
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        // Default state
+        isReady = false;
+        instruction.textContent = "Show your RIGHT HAND to the camera";
+        instruction.style.color = "white";
+        guideBox.classList.remove('valid', 'detected');
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            // Hand detected!
+            guideBox.classList.add('detected');
+            
+            for (const landmarks of results.multiHandLandmarks) {
+                // Draw dots so user knows it's working
+                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(canvasCtx, landmarks, {color: '#FFFFFF', lineWidth: 1, radius: 2});
+            }
+
+            // Any hand in frame = Ready (Maximum permissiveness)
+            isReady = true;
+            instruction.textContent = "HAND DETECTED - READY TO CAPTURE";
+            instruction.style.color = "#00c851";
+            guideBox.classList.add('valid');
+        }
+
+        captureBtn.disabled = !isReady;
+        if (isReady) {
+            captureBtn.classList.add('ready');
+            captureBtn.style.opacity = "1";
+        } else {
+            captureBtn.classList.remove('ready');
+            captureBtn.style.opacity = "0.5";
+        }
+        
+        canvasCtx.restore();
+    }
+
+    const hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    hands.onResults(onResults);
+
+    async function initCamera() {
+        try {
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({ image: videoElement });
+                },
+                width: 1280,
+                height: 720
+            });
+            
+            await camera.start();
+            cameraActive = true;
+            console.log("Camera started successfully");
+            
+            videoElement.addEventListener('loadedmetadata', () => {
+                canvasElement.width = videoElement.videoWidth;
+                canvasElement.height = videoElement.videoHeight;
+            });
+        } catch (err) {
+            console.error("Camera Error:", err);
+            alert("Error: " + err.message + ". Please ensure camera permissions are granted.");
+            location.reload();
+        }
+    }
+
+    captureBtn.onclick = async () => {
+        if (!isReady) return;
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = videoElement.videoWidth;
+        tempCanvas.height = videoElement.videoHeight;
+        const ctx = tempCanvas.getContext('2d');
+        
+        ctx.translate(tempCanvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoElement, 0, 0);
+        
+        const imageData = tempCanvas.toDataURL('image/jpeg', 0.85);
+
+        try {
+            captureBtn.disabled = true;
+            instruction.textContent = "Processing & Saving...";
+            
+            const res = await fetch('/api/palm/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ empCode: employeeCode, image: imageData })
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                showToast(`Success! Right palm registered.`, 'success');
+                setTimeout(() => window.location.href = 'index.html', 2000);
+            } else {
+                showToast(result.message, 'error');
+                captureBtn.disabled = false;
+            }
+        } catch (err) {
+            showToast("Network Error", "error");
+            captureBtn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>
