@@ -3,23 +3,15 @@
  */
 
 const ImageLog = require("../models/ImageLog");
-
-/**
- * Utility to get current time in Indian Standard Time (IST)
- */
-function getISTDate() {
-  const now = new Date();
-  // IST is UTC + 5:30
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  return new Date(now.getTime() + istOffset);
-}
+const { getISTDate } = require("./time.util");
 
 /**
  * Formats date for filename: DD-MM-YYYY_HH-mm-ss in IST
  */
 function formatISTForFilename(date) {
-  // Create a date object shifted to IST for extraction
-  const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+  // If the date is already stored as IST, we can just use it directly for extraction
+  // but let's keep it safe by using a fresh date object
+  const istDate = new Date(date);
   const pad = (n) => n.toString().padStart(2, "0");
   
   return `${pad(istDate.getUTCDate())}-${pad(istDate.getUTCMonth() + 1)}-${istDate.getUTCFullYear()}_${pad(istDate.getUTCHours())}-${pad(istDate.getUTCMinutes())}-${pad(istDate.getUTCSeconds())}`;
@@ -40,7 +32,7 @@ async function insertLog(entry) {
       FileName: `${safeCode}.jpg`,
       FileSizeBytes: entry.FileSizeBytes,
       ImageData: entry.ImageData,
-      CapturedAt: new Date(), // Store in standard UTC
+      CapturedAt: getISTDate(),
     });
 
     return await newLog.save();

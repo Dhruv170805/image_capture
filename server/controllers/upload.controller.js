@@ -7,12 +7,12 @@ const { processImage, MAX_INPUT_BYTES } = require("../services/image.service");
 const { streamImagesToZip } = require("../services/download.service");
 const { generateFileNames } = require("../utils/filename.util");
 const { insertLog, getLogs: getLogsUtil, getImageById } = require("../utils/imageLog.util");
+const { getISTDate } = require("../utils/time.util");
 const employeeService = require("../services/employee.service");
 const ImageLog = require("../models/ImageLog");
 const Employee = require("../models/Employee");
 const EmployeePalm = require("../models/EmployeePalm");
 const Config = require("../models/Config");
-const archiver = require("archiver");
 
 async function uploadImage(req, res) {
   try {
@@ -96,8 +96,7 @@ async function serveImage(req, res) {
 
 async function downloadAll(req, res) {
   try {
-    const now = new Date();
-    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const istNow = getISTDate();
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     

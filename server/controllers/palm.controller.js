@@ -1,6 +1,7 @@
 const EmployeePalm = require("../models/EmployeePalm");
 const Employee = require("../models/Employee");
 const { processPalmImage } = require("../services/palm.service");
+const { getISTDate } = require("../utils/time.util");
 
 async function registerPalm(req, res) {
   try {
@@ -29,7 +30,7 @@ async function registerPalm(req, res) {
       FileName: `${employee.EmployeeCode}_PALM_RIGHT.jpg`,
       FileSizeBytes: processed.length,
       ImageData: processed,
-      CapturedAt: new Date(), // Standard UTC, utilities will handle IST display
+      CapturedAt: getISTDate(),
     });
 
     await newPalm.save();

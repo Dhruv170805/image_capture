@@ -305,8 +305,23 @@
                 isReady = true;
                 instruction.textContent = "READY TO CAPTURE / નોંધણી માટે તૈયાર";
                 guideBox.classList.add('valid');
-                drawConnectors(canvasCtx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color: '#10b981', lineWidth: 3});
-                drawLandmarks(canvasCtx, results.multiHandLandmarks[0], {color: '#FFFFFF', lineWidth: 2, radius: 3});
+                
+                // Premium Tracking Look
+                drawConnectors(canvasCtx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {
+                    color: 'rgba(16, 185, 129, 0.6)', 
+                    lineWidth: 2
+                });
+                
+                // Add a subtle glow to joints
+                results.multiHandLandmarks[0].forEach(landmark => {
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(landmark.x * canvasElement.width, landmark.y * canvasElement.height, 4, 0, 2 * Math.PI);
+                    canvasCtx.fillStyle = 'white';
+                    canvasCtx.shadowBlur = 10;
+                    canvasCtx.shadowColor = '#10b981';
+                    canvasCtx.fill();
+                    canvasCtx.shadowBlur = 0; // Reset
+                });
             }
         }
         captureBtn.disabled = !isReady;

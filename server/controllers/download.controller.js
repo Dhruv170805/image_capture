@@ -8,6 +8,7 @@ const { streamImagesToZip, MAX_DOWNLOAD_LIMIT } = require("../services/download.
 const ImageLog = require("../models/ImageLog");
 const Employee = require("../models/Employee");
 const XLSX = require("xlsx");
+const { getISTDate, formatIST } = require("../utils/time.util");
 
 const EmployeePalm = require("../models/EmployeePalm");
 const Config = require("../models/Config");
@@ -58,9 +59,9 @@ async function downloadRegisteredExcel(req, res) {
         "Employee Name": emp.Name || (face ? face.EmployeeName : "Registered (Palm)"),
         "Department": emp.Department || (face ? face.Department : "N/A"),
         "Face Status": face ? "Captured" : "Pending",
-        "Face Time (IST)": face ? new Date(face.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-",
+        "Face Time (IST)": face ? formatIST(face.CapturedAt) : "-",
         "Palm Status": palm ? "Captured" : "Pending",
-        "Palm Time (IST)": palm ? new Date(palm.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-"
+        "Palm Time (IST)": palm ? formatIST(palm.CapturedAt) : "-"
       });
     }
 
@@ -128,9 +129,9 @@ async function downloadRegisteredCSV(req, res) {
       const name = emp.Name || (face ? face.EmployeeName : "N/A");
       const dept = emp.Department || (face ? face.Department : "N/A");
       const faceStatus = face ? "Captured" : "Pending";
-      const faceTime = face ? new Date(face.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-";
+      const faceTime = face ? formatIST(face.CapturedAt) : "-";
       const palmStatus = palm ? "Captured" : "Pending";
-      const palmTime = palm ? new Date(palm.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "-";
+      const palmTime = palm ? formatIST(palm.CapturedAt) : "-";
 
       csv += `"${code}","${name}","${dept}","${faceStatus}","${faceTime}","${palmStatus}","${palmTime}"\n`;
     });
@@ -186,8 +187,7 @@ async function downloadByIds(req, res) {
       return res.status(400).json({ success: false, message: "No valid IDs provided." });
     }
 
-    const now = new Date();
-    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const istNow = getISTDate();
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     const zipFilename = `custom_selection_${timestamp}.zip`;
@@ -209,8 +209,7 @@ async function downloadByEmployee(req, res) {
     }
 
     const safeCode = code.trim().toUpperCase();
-    const now = new Date();
-    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const istNow = getISTDate();
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     const zipFilename = `biometric_${safeCode}_${timestamp}.zip`;
@@ -239,8 +238,7 @@ async function downloadByDate(req, res) {
       return res.status(400).json({ success: false, message: "Invalid date format provided." });
     }
 
-    const now = new Date();
-    const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const istNow = getISTDate();
     const pad = (n) => n.toString().padStart(2, "0");
     const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}`;
     const zipFilename = `biometric_export_${timestamp}.zip`;

@@ -40,8 +40,18 @@
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); pointer-events: none; }
         .silhouette-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 85%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; transition: all 0.3s; }
         .valid .silhouette-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.05); }
-        .palm-guide-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 80%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; }
-        .valid .palm-guide-svg { stroke: var(--success); stroke-width: 4; }
+        /* Restored Old Palm Machine UI */
+        .palm-guide-box { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 260px; height: 360px; border: 3px dashed rgba(255,255,255,0.4);
+            border-radius: 30px; pointer-events: none; transition: all 0.3s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.05); z-index: 10;
+        }
+        .valid .palm-guide-box { border-color: var(--success); border-style: solid; background: rgba(16, 185, 129, 0.15); box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
+        .palm-hand-svg { width: 160px; height: 220px; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.6); stroke-width: 2; transition: all 0.3s; }
+        .valid .palm-hand-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.2); }
+
         .instruction-box { background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; width: 85%; z-index: 20; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); }
         .name-card { background: white; padding: 1rem; border-radius: 18px; border: 2px solid var(--accent); margin-bottom: 1rem; flex-shrink: 0; }
         .name-card span { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
@@ -76,7 +86,9 @@
             <div id="stage-face" class="step">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
                 <div class="name-card"><span>Registering Employee / કર્મચારી</span><p id="face-user-name"></p></div>
-                <div id="camera-wrap"><video id="face-video" autoplay playsinline></video><canvas id="face-canvas"></canvas>
+                <div id="camera-wrap">
+                    <div id="auto-capture-status-face" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">સ્થિર કરો... STABILIZING...</div>
+                    <video id="face-video" autoplay playsinline></video><canvas id="face-canvas"></canvas>
                     <svg class="silhouette-svg" viewBox="0 0 100 100"><path d="M50 10 C40 10 35 20 35 30 C35 40 40 50 50 50 C60 50 65 40 65 30 C65 20 60 10 50 10 Z M20 90 C20 70 30 60 50 60 C70 60 80 70 80 90" fill="none" /></svg>
                     <div class="instruction-box" id="face-instr">Initializing AI...</div>
                 </div>
@@ -85,8 +97,19 @@
             <div id="stage-palm" class="step">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button id="palm-back-btn" class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
                 <div class="name-card"><span>Registering Employee / કર્મચારી</span><p id="palm-user-name"></p></div>
-                <div id="camera-wrap"><div id="auto-capture-status" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">સ્થિર કરો... STABILIZING...</div><video id="palm-video" autoplay playsinline></video><canvas id="palm-canvas"></canvas>
-                    <svg class="palm-guide-svg" viewBox="0 0 200 250"><path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" fill="none" /></svg>
+                <div id="camera-wrap" class="active">
+                    <div id="auto-capture-status" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">સ્થિર કરો... STABILIZING...</div>
+                    <video id="palm-video" autoplay playsinline></video>
+                    <canvas id="palm-canvas"></canvas>
+
+                    <!-- Restored Old Palm UI Guide Box -->
+                    <div class="palm-guide-box">
+                        <svg class="palm-hand-svg" viewBox="0 0 200 250">
+                            <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
+                        </svg>
+                        <p style="color:white; font-weight:900; font-size: 0.9rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); text-align:center;">જમણો હાથ ગોઠવો<br>Align Full Right Hand</p>
+                    </div>
+
                     <div class="instruction-box" id="palm-instr">Show Right Hand / હાથ બતાવો</div>
                 </div>
                 <button id="palm-capture-btn" class="btn btn-capture" disabled><span>તૈયાર / READY 🖐️</span></button>
@@ -108,15 +131,37 @@
         function onFaceResults(results) {
             if (currentStage !== "FACE") return;
             const wrap = document.getElementById('stage-face').querySelector('#camera-wrap'), instr = document.getElementById('face-instr'), btn = document.getElementById('face-capture-btn');
-            faceReady = false; wrap.className = "invalid";
-            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) { instr.textContent = "No Face Detected"; btn.disabled = true; return; }
+            const autoStatus = document.getElementById('auto-capture-status-face');
+            
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) { 
+                faceReady = false; wrap.className = "invalid"; instr.textContent = "No Face Detected"; btn.disabled = true; 
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+                if (autoStatus) autoStatus.style.display = 'none';
+                return; 
+            }
+            
             const lm = results.multiFaceLandmarks[0];
             const yaw = Math.abs(lm[1].x - (lm[33].x + lm[263].x) / 2) * 100;
             const roll = Math.abs(lm[33].y - lm[263].y) * 100;
             const eyes = (lm[145].y - lm[159].y < 0.012) || (lm[374].y - lm[386].y < 0.012);
-            if (yaw > 5 || roll > 5) { instr.textContent = "Keep Face Straight / ચહેરો સીધો રાખો"; wrap.className = "invalid"; }
-            else if (eyes) { instr.textContent = "Keep Eyes Open / આંખો ખુલ્લી રાખો"; }
-            else { faceReady = true; instr.textContent = "Perfect! Hold Still / બરાબર છે, સ્થિર રહો"; wrap.className = "valid"; btn.classList.add('ready'); }
+            
+            if (yaw > 5 || roll > 5) { 
+                faceReady = false; instr.textContent = "Keep Face Straight / ચહેરો સીધો રાખો"; wrap.className = "invalid"; 
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+                if (autoStatus) autoStatus.style.display = 'none';
+            }
+            else if (eyes) { 
+                faceReady = false; instr.textContent = "Keep Eyes Open / આંખો ખુલ્લી રાખો"; 
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+                if (autoStatus) autoStatus.style.display = 'none';
+            }
+            else { 
+                if (!faceReady) {
+                    faceReady = true; instr.textContent = "Perfect! Hold Still / બરાબર છે, સ્થિર રહો"; wrap.className = "valid"; btn.classList.add('ready');
+                    if (autoStatus) autoStatus.style.display = 'block';
+                    if (!autoCaptureTimer) autoCaptureTimer = setTimeout(() => { if (faceReady) triggerFaceCapture(); }, 1500);
+                }
+            }
             btn.disabled = !faceReady;
         }
 
@@ -193,7 +238,7 @@
             if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
         }
 
-        document.getElementById('face-capture-btn').onclick = async () => {
+        async function triggerFaceCapture() {
             if (!faceReady) return;
             const vid = document.getElementById('face-video'), can = document.createElement('canvas');
             can.width = vid.videoWidth; can.height = vid.videoHeight;
@@ -203,7 +248,9 @@
                 if (currentMode === "BOTH") { stopCamera(); document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
                 else { stopCamera(); showStage("THANKS"); }
             }
-        };
+        }
+
+        document.getElementById('face-capture-btn').onclick = triggerFaceCapture;
 
         document.getElementById('palm-capture-btn').onclick = triggerPalmCapture;
 

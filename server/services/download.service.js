@@ -6,6 +6,7 @@
 const archiver = require("archiver");
 const ImageLog = require("../models/ImageLog");
 const EmployeePalm = require("../models/EmployeePalm");
+const { formatIST } = require("../utils/time.util");
 
 const MAX_DOWNLOAD_LIMIT = 200; // Increased to accommodate both types
 
@@ -29,7 +30,7 @@ async function streamImagesToZip(res, query, zipFilename) {
       const fileName = `${empCode}_FACE.jpg`;
       
       archive.append(doc.ImageData, { name: fileName });
-      const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
+      const istTime = formatIST(doc.CapturedAt);
       manifestCSV += `FACE,"${doc.EmployeeCode}","${doc.EmployeeName}","${doc.Department}","${fileName}","${istTime}"\n`;
       count++;
     }
@@ -43,7 +44,7 @@ async function streamImagesToZip(res, query, zipFilename) {
       const fileName = `${empCode}_PALM.jpg`;
       
       archive.append(doc.ImageData, { name: fileName });
-      const istTime = doc.CapturedAt ? new Date(doc.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A";
+      const istTime = formatIST(doc.CapturedAt);
       manifestCSV += `PALM,"${doc.EmployeeCode}","N/A","N/A","${fileName}","${istTime}"\n`;
       count++;
     }

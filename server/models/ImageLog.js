@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { getISTDate } = require("../utils/time.util");
 
 const ImageLogSchema = new mongoose.Schema({
   EmployeeCode: { type: String, required: true, index: true },
@@ -8,7 +9,7 @@ const ImageLogSchema = new mongoose.Schema({
   FileSizeBytes: { type: Number, required: true },
   ImageData: { type: Buffer, required: true }, // Store the actual image
   ContentType: { type: String, default: "image/jpeg" },
-  CapturedAt: { type: Date, default: Date.now, index: true },
+  CapturedAt: { type: Date, default: getISTDate, index: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model("ImageLog", ImageLogSchema);

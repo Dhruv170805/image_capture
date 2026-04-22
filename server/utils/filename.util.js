@@ -4,10 +4,10 @@
  * Primary file is always overwritten; archive preserves history.
  */
 
+const { getISTDate } = require("./time.util");
+
 function generateFileNames(empCode) {
-  const now = new Date();
-  // Shift to IST
-  const istNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  const istNow = getISTDate();
 
   // Format: 2026-04-21_15-30-10
   const pad = (n) => n.toString().padStart(2, "0");
