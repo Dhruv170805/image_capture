@@ -5,36 +5,39 @@
 
 const sharp = require("sharp");
 
-const TARGET_WIDTH = 160; 
-const TARGET_HEIGHT = 160;
-const MAX_INPUT_BYTES = 5 * 1024 * 1024; // 5 MB raw limit
-const SIZE_BUDGET = 5000; // Aim for slightly under 5KB to be safe
+const TARGET_WIDTH = 128; 
+const TARGET_HEIGHT = 128;
+const MAX_INPUT_BYTES = 5 * 1024 * 1024;
+const SIZE_BUDGET = 5000; 
 
 async function processImage(buffer) {
   if (buffer.length > MAX_INPUT_BYTES) {
     throw new Error(`Image too large`);
   }
 
-  // Pre-processing: Resize, noise reduction, and sharpening
+  // Grayscale + 128x128 is the "sweet spot" for 5KB
   const basePipeline = sharp(buffer)
     .resize(TARGET_WIDTH, TARGET_HEIGHT, {
       fit: "cover",
       position: "centre",
     })
-    .blur(0.4) // Perceptual tuning: Slight blur to remove sensor noise
-    .sharpen({ sigma: 0.8 }); // Enhance edges for visual clarity
+    .grayscale() // SAVE 30-50% size -> re-invested into quality
+    .sharpen({
+      sigma: 1,
+      m1: 2,
+      j1: 2
+    }); // Stronger edge definition
 
-  let quality = 45;
+  let quality = 70; // Start MUCH higher because grayscale is efficient
   let processedBuffer;
   
-  // Adaptive compression loop
   do {
     processedBuffer = await basePipeline
       .clone()
       .jpeg({ 
         quality: quality, 
         mozjpeg: true, 
-        chromaSubsampling: '4:2:0',
+        chromaSubsampling: '4:4:4', // Best detail for grayscale
         trellisQuantisation: true,
         overshootDeringing: true,
         optimizeScans: true
@@ -44,15 +47,6 @@ async function processImage(buffer) {
     if (processedBuffer.length <= SIZE_BUDGET) break;
     quality -= 5;
   } while (quality > 10);
-
-  // Safety fallback: If still over budget, shrink size slightly
-  if (processedBuffer.length > SIZE_BUDGET) {
-    processedBuffer = await basePipeline
-      .clone()
-      .resize(140, 140)
-      .jpeg({ quality: 15, mozjpeg: true })
-      .toBuffer();
-  }
 
   return processedBuffer;
 }
