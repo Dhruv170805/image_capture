@@ -155,6 +155,9 @@ async function uploadExcelEmployees(buffer) {
       return { success: false, message: "No data found in Excel file." };
     }
 
+    // WIPE EXISTING EMPLOYEES before uploading new master list
+    await Employee.deleteMany({});
+
     // Execute bulk write
     await Employee.bulkWrite(validOperations);
     return { success: true, count: validOperations.length };
