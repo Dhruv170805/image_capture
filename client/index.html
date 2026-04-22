@@ -7,164 +7,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <style>
         :root { 
-            --primary: #003366; 
-            --accent: #3b82f6; 
+            --primary: #003366; --accent: #3b82f6; 
             --bg-gradient: radial-gradient(at 0% 0%, hsla(210,100%,96%,1) 0, transparent 50%), 
                            radial-gradient(at 50% 0%, hsla(225,100%,94%,1) 0, transparent 50%), 
                            radial-gradient(at 100% 0%, hsla(190,100%,92%,1) 0, transparent 50%);
             --glass: rgba(255, 255, 255, 0.85);
-            --success: #10b981; 
-            --invalid: #ef4444; 
-            --warning: #f59e0b;
+            --success: #10b981; --invalid: #ef4444; --warning: #f59e0b;
         }
-        
-        html, body { height: 100dvh; margin: 0; overflow: hidden; font-family: 'Outfit', sans-serif; background: #f8fafc; }
-        body { 
-            background-image: var(--bg-gradient);
-            background-attachment: fixed;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .navbar { 
-            background: rgba(255, 255, 255, 0.6); 
-            backdrop-filter: blur(10px);
-            padding: 0.8rem 1.5rem; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            flex-shrink: 0;
-            z-index: 100;
-        }
-        .navbar img { height: 35px; }
-        .nav-center { font-size: 1.2rem; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; }
-
-        .container { 
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        .card { 
-            background: var(--glass); 
-            backdrop-filter: blur(12px);
-            padding: 1.5rem; 
-            border-radius: 24px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.06); 
-            border: 1px solid rgba(255,255,255,0.5);
-            text-align: center; 
-            width: 100%;
-            max-width: 500px;
-            max-height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        html, body { height: 100dvh; margin: 0; overflow: hidden; font-family: 'Outfit', sans-serif; }
+        body { background-image: var(--bg-gradient); background-attachment: fixed; display: flex; flex-direction: column; }
+        .navbar { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+        .nav-center { font-size: 1.2rem; font-weight: 900; color: var(--primary); }
+        .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0.5rem; width: 100%; box-sizing: border-box; overflow: hidden; }
+        .card { background: var(--glass); backdrop-filter: blur(12px); padding: 1.5rem; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.5); text-align: center; width: 100%; max-width: 500px; max-height: 100%; display: flex; flex-direction: column; box-sizing: border-box; transition: all 0.4s ease; }
         .wide .card { max-width: 850px; }
-        
         .step { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .step.active { display: flex; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .btn { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 1.2rem; 
-            border-radius: 16px; 
-            font-size: 1.1rem; 
-            font-weight: 800; 
-            cursor: pointer; 
-            width: 100%; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; justify-content: center; align-items: center; gap: 8px;
-            text-transform: uppercase;
-            flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
-        }
-        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 51, 102, 0.2); }
-        .btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 1.2rem; border-radius: 16px; font-size: 1.1rem; font-weight: 800; cursor: pointer; width: 100%; transition: 0.3s; text-transform: uppercase; flex-shrink: 0; }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
         .btn-capture.ready { background: var(--success); transform: scale(1.02); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-
-        input { 
-            width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; 
-            border: 2px solid #e2e8f0; border-radius: 16px; 
-            font-size: 1.8rem; text-align: center; font-weight: 900; 
-            box-sizing: border-box; color: var(--primary); background: white;
-        }
-
-        #camera-wrap { 
-            position: relative; 
-            border-radius: 20px; 
-            overflow: hidden; 
-            background: #000; 
-            margin-bottom: 1rem; 
-            border: 4px solid #cbd5e1;
-            aspect-ratio: 4/3;
-            flex: 1;
-            min-height: 0;
-            transition: border-color 0.3s;
-        }
+        input { width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.8rem; text-align: center; font-weight: 900; box-sizing: border-box; color: var(--primary); }
+        #camera-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #000; margin-bottom: 1rem; border: 4px solid #cbd5e1; aspect-ratio: 4/3; flex: 1; min-height: 0; }
         #camera-wrap.valid { border-color: var(--success); }
         #camera-wrap.partial { border-color: var(--warning); }
         #camera-wrap.invalid { border-color: var(--invalid); }
-
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); pointer-events: none; }
+        
+        /* Person Outline Silhouette */
+        .silhouette-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 85%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; transition: all 0.3s; }
+        .valid .silhouette-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.05); }
 
-        .face-oval {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 55%; height: 75%; border: 3px dashed rgba(255,255,255,0.4);
-            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-            pointer-events: none; z-index: 10; transition: all 0.3s;
-        }
-        .valid .face-oval { border-color: var(--success); border-style: solid; background: rgba(16, 185, 129, 0.05); }
+        /* Palm Guide */
+        .palm-guide-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 80%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; display:none; }
+        .active .palm-guide-svg { display: block; }
+        .valid .palm-guide-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.05); }
 
-        .instruction-box {
-            background: rgba(0,0,0,0.85); color: white; padding: 10px 20px;
-            border-radius: 50px; font-weight: 800; font-size: 0.9rem;
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            text-align: center; width: 85%; z-index: 20; text-transform: uppercase;
-            letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .name-card { 
-            background: white; padding: 1rem; border-radius: 18px; 
-            border: 2px solid var(--accent); margin-bottom: 1rem; flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
-        }
-        .name-card span { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
-        .name-card p { margin: 0; font-weight: 900; font-size: 1.6rem; color: var(--primary); line-height: 1.1; }
-
+        .instruction-box { background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; width: 85%; z-index: 20; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); }
+        .name-card { background: white; padding: 1rem; border-radius: 18px; border: 2px solid var(--accent); margin-bottom: 1rem; flex-shrink: 0; }
+        .name-card span { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .name-card p { margin: 0; font-weight: 900; font-size: 1.4rem; color: var(--primary); line-height: 1.1; }
         .progress-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-shrink: 0; }
         .progress-dot { flex: 1; height: 5px; background: #e2e8f0; border-radius: 10px; }
         .progress-dot.active { background: var(--accent); }
-
         .success-checkmark { width: 60px; height: 60px; margin: 0 auto 1rem; border-radius: 50%; border: 4px solid var(--success); position: relative; }
         .check-icon { position: absolute; width: 30px; height: 15px; border-left: 5px solid var(--success); border-bottom: 5px solid var(--success); transform: rotate(-45deg); top: 18px; left: 15px; }
-
-        @media (max-width: 480px) {
-            .card { padding: 1.2rem 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; }
-            .container { padding: 0; }
-            .nav-center { font-size: 1rem; }
-            .name-card p { font-size: 1.3rem; }
-            input { font-size: 1.6rem; }
-        }
+        @media (max-width: 480px) { .card { padding: 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; } .container { padding: 0; } .nav-center { font-size: 1rem; } }
     </style>
 </head>
 <body>
-
     <nav class="navbar">
         <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
             <img src="logo.png" alt="Logo">
@@ -176,192 +73,142 @@
         <div class="nav-center">Enrollment 4 NG P&P</div>
         <div class="nav-right"></div>
     </nav>
-
     <div class="container">
         <div class="card">
-            <div class="progress-bar" id="progress-bar">
-                <div class="progress-dot" id="dot-1"></div>
-                <div class="progress-dot" id="dot-2"></div>
-                <div class="progress-dot" id="dot-3"></div>
-            </div>
-            
-            <!-- STAGE: VERIFY -->
+            <div class="progress-bar" id="progress-bar"><div class="progress-dot" id="dot-1"></div><div class="progress-dot" id="dot-2"></div><div class="progress-dot" id="dot-3"></div></div>
             <div id="stage-verify" class="step active">
-                <h1 style="margin: 0 0 1.5rem 0; color: var(--primary); font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
-                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                    <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
-                    <button id="verify-btn" class="btn">
-                        <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.7em">CONTINUE REGISTRATION</small></span>
-                    </button>
-                </div>
+                <h1 style="margin: 1.5rem 0; color: var(--primary); font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;"><input type="text" id="emp-code" placeholder="Ex: 1234" autofocus><button id="verify-btn" class="btn"><span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.7em">CONTINUE REGISTRATION</small></span></button></div>
             </div>
-
-            <!-- STAGE: FACE -->
             <div id="stage-face" class="step">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                    <button class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569; box-shadow: none;" onclick="goBack()">⬅️ BACK</button>
-                </div>
-                <div class="name-card">
-                    <span>Registering Employee / કર્મચારી</span>
-                    <p id="face-user-name"></p>
-                </div>
-
-                <div id="camera-wrap">
-                    <video id="face-video" autoplay playsinline></video>
-                    <canvas id="face-canvas"></canvas>
-                    <div class="face-oval"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
+                <div class="name-card"><span>Registering Employee / કર્મચારી</span><p id="face-user-name"></p></div>
+                <div id="camera-wrap" class="camera-container"><video id="face-video" autoplay playsinline></video><canvas id="face-canvas"></canvas>
+                    <svg class="silhouette-svg" viewBox="0 0 100 100"><path d="M50 10 C40 10 35 20 35 30 C35 40 40 50 50 50 C60 50 65 40 65 30 C65 20 60 10 50 10 Z M20 90 C20 70 30 60 50 60 C70 60 80 70 80 90" fill="none" /></svg>
                     <div class="instruction-box" id="face-instr">Initializing AI...</div>
                 </div>
-
-                <button id="face-capture-btn" class="btn btn-capture" disabled>
-                    <span>ચહેરો સ્કેન કરો / CAPTURE 📸</span>
-                </button>
+                <button id="face-capture-btn" class="btn btn-capture" disabled><span>ચહેરો સ્કેન કરો / CAPTURE 📸</span></button>
             </div>
-
-            <!-- STAGE: THANKS -->
-            <div id="stage-thanks" class="step">
-                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                    <div class="success-checkmark"><div class="check-icon"></div></div>
-                    <h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2.2rem;">Success / સફળ!</h1>
-                    <h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Registration Complete</h2>
-                    <p style="color: #64748b; font-weight: 700; margin-bottom: 2rem; font-size: 1.1rem;">Your biometric profile has been secured.</p>
-                    <button class="btn" onclick="location.reload()"><span>Register Another / બીજું</span></button>
+            <div id="stage-palm" class="step">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button id="palm-back-btn" class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
+                <div class="name-card"><span>Registering Employee / કર્મચારી</span><p id="palm-user-name"></p></div>
+                <div id="camera-wrap" class="active"><div id="auto-capture-status" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">STABILIZING...</div><video id="palm-video" autoplay playsinline></video><canvas id="palm-canvas"></canvas>
+                    <svg class="silhouette-svg palm-guide-svg" viewBox="0 0 200 250"><path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" fill="none" /></svg>
+                    <div class="instruction-box" id="palm-instr">Show Right Hand / હાથ બતાવો</div>
                 </div>
+                <button id="palm-capture-btn" class="btn btn-capture" disabled><span>તૈયાર / READY 🖐️</span></button>
+            </div>
+            <div id="stage-thanks" class="step">
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;"><div class="success-checkmark"><div class="check-icon"></div></div><h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2.2rem;">સફળ!</h1><h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Registration Complete</h2><button class="btn" onclick="location.reload()"><span>Register Another / બીજું</span></button></div>
             </div>
         </div>
     </div>
-
     <script>
-        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "";
-        let stream = null, activeCamera = null, faceReady = false;
-
-        const faceMesh = new FaceMesh({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-        });
-
-        faceMesh.setOptions({
-            maxNumFaces: 1,
-            refineLandmarks: true,
-            minDetectionConfidence: 0.7,
-            minTrackingConfidence: 0.7
-        });
-
+        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false;
+        const faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
         faceMesh.onResults(onFaceResults);
+        const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5 });
+        hands.onResults(onPalmResults);
 
         function onFaceResults(results) {
             if (currentStage !== "FACE") return;
-            const canvas = document.getElementById('face-canvas');
-            const ctx = canvas.getContext('2d');
-            const wrap = document.getElementById('camera-wrap');
-            const instr = document.getElementById('face-instr');
-            const btn = document.getElementById('face-capture-btn');
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            faceReady = false;
-            wrap.className = "invalid";
-
-            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-                instr.textContent = "No Face Detected / ચહેરો દેખાતો નથી";
-                btn.disabled = true; return;
-            }
-
-            if (results.multiFaceLandmarks.length > 1) {
-                instr.textContent = "Multiple People Detected / એક જ વ્યક્તિ રહો";
-                btn.disabled = true; return;
-            }
-
-            const landmarks = results.multiFaceLandmarks[0];
-            const nose = landmarks[1], leftEye = landmarks[33], rightEye = landmarks[263];
-            const yaw = Math.abs(nose.x - (leftEye.x + rightEye.x) / 2) * 100;
-            const roll = Math.abs(leftEye.y - rightEye.y) * 100;
-            const eyesClosed = (landmarks[145].y - landmarks[159].y < 0.015) || (landmarks[374].y - landmarks[386].y < 0.015);
-            const inCenter = nose.x > 0.35 && nose.x < 0.65 && nose.y > 0.3 && nose.y < 0.7;
-
-            if (yaw > 5 || roll > 5) {
-                instr.textContent = "Keep Face Straight / ચહેરો સીધો રાખો";
-                wrap.className = "partial";
-            } else if (eyesClosed) {
-                instr.textContent = "Keep Eyes Open / આંખો ખુલ્લી રાખો";
-            } else if (!inCenter) {
-                instr.textContent = "Center your face / ચહેરો વચ્ચે રાખો";
-            } else {
-                faceReady = true;
-                instr.textContent = "Perfect! Hold Still / બરાબર છે, સ્થિર રહો";
-                wrap.className = "valid";
-                btn.classList.add('ready');
-            }
+            const wrap = document.getElementById('stage-face').querySelector('#camera-wrap'), instr = document.getElementById('face-instr'), btn = document.getElementById('face-capture-btn');
+            faceReady = false; wrap.className = "invalid";
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) { instr.textContent = "No Face Detected"; btn.disabled = true; return; }
+            const lm = results.multiFaceLandmarks[0];
+            const yaw = Math.abs(lm[1].x - (lm[33].x + lm[263].x) / 2) * 100;
+            const roll = Math.abs(lm[33].y - lm[263].y) * 100;
+            const eyes = (lm[145].y - lm[159].y < 0.012) || (lm[374].y - lm[386].y < 0.012);
+            if (yaw > 5 || roll > 5) { instr.textContent = "Keep Face Straight"; wrap.className = "partial"; }
+            else if (eyes) { instr.textContent = "Keep Eyes Open"; }
+            else { faceReady = true; instr.textContent = "Perfect! Hold Still"; wrap.className = "valid"; btn.classList.add('ready'); }
             btn.disabled = !faceReady;
         }
 
-        async function startCamera() {
-            const video = document.getElementById('face-video');
+        function onPalmResults(results) {
+            if (currentStage !== "PALM") return;
+            const wrap = document.getElementById('stage-palm').querySelector('#camera-wrap'), instr = document.getElementById('palm-instr'), btn = document.getElementById('palm-capture-btn');
+            const canvas = document.getElementById('palm-canvas'), ctx = canvas.getContext('2d');
+            ctx.clearRect(0,0,canvas.width,canvas.height); palmReady = false; wrap.classList.remove('valid');
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                if (results.multiHandedness[0].label === "Left") {
+                    palmReady = true; wrap.classList.add('valid'); instr.textContent = "READY TO CAPTURE";
+                    drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color:'#10b981', lineWidth:3});
+                }
+            } else { instr.textContent = "Show Right Hand"; }
+            btn.disabled = !palmReady; if(palmReady) btn.classList.add('ready'); else btn.classList.remove('ready');
+        }
+
+        async function startCamera(isPalm = false) {
+            stopCamera(); const vid = document.getElementById(isPalm ? 'palm-video' : 'face-video');
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1280, height: 720 } });
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    const canvas = document.getElementById('face-canvas');
-                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                };
-                activeCamera = new Camera(video, { onFrame: async () => { await faceMesh.send({ image: video }); } });
+                vid.srcObject = stream;
+                activeCamera = new Camera(vid, { onFrame: async () => { if(isPalm) await hands.send({image:vid}); else await faceMesh.send({image:vid}); } });
+                vid.onloadedmetadata = () => { if(isPalm) { const c = document.getElementById('palm-canvas'); c.width = vid.videoWidth; c.height = vid.videoHeight; } };
                 await activeCamera.start();
             } catch (e) { alert("Camera Error"); }
         }
 
-        function stopCamera() { if (activeCamera) activeCamera.stop(); if (stream) stream.getTracks().forEach(t => t.stop()); }
+        function stopCamera() { if (activeCamera) { activeCamera.stop(); activeCamera = null; } if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
+        function goBack() { stopCamera(); showStage("VERIFY"); }
+        function showStage(s) {
+            currentStage = s.toUpperCase();
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`stage-${s.toLowerCase()}`).classList.add('active');
+            const cont = document.querySelector('.container');
+            if (s !== "VERIFY" && s !== "THANKS") cont.classList.add('wide'); else cont.classList.remove('wide');
+            updateProgress(); updateStageLabels();
+        }
+
+        function updateStageLabels() {
+            const pb = document.getElementById('palm-back-btn');
+            if (pb) pb.style.display = (currentMode === "BOTH" ? "none" : "block");
+        }
+
+        function updateProgress() {
+            document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('active'));
+            if (currentMode !== "BOTH") document.getElementById('dot-3').style.display = 'none';
+            if (currentStage === "VERIFY") document.getElementById('dot-1').classList.add('active');
+            if (currentStage === "FACE") document.getElementById('dot-2').classList.add('active');
+            if (currentStage === "PALM") document.getElementById(currentMode === "BOTH" ? 'dot-3' : 'dot-2').classList.add('active');
+        }
 
         document.getElementById('verify-btn').onclick = async () => {
-            const code = document.getElementById('emp-code').value.trim();
-            if (!code) return;
-            const res = await fetch(`/api/employee/${code}`);
-            const result = await res.json();
+            const code = document.getElementById('emp-code').value.trim(); if (!code) return;
+            const res = await fetch(`/api/employee/${code}`); const result = await res.json();
             if (result.success) {
-                employeeCode = result.data.EmployeeCode;
-                employeeName = result.data.Name;
-                document.getElementById('face-user-name').textContent = employeeName;
-                showStage("FACE");
-                startCamera();
+                employeeCode = result.data.EmployeeCode; employeeName = result.data.Name;
+                if (currentMode === "PALM") { document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
+                else { document.getElementById('face-user-name').textContent = employeeName; showStage("FACE"); startCamera(false); }
             } else alert("Invalid Code");
         };
 
         document.getElementById('face-capture-btn').onclick = async () => {
             if (!faceReady) return;
-            const video = document.getElementById('face-video');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
-            ctx.drawImage(video, 0, 0);
-            const imageData = canvas.toDataURL('image/jpeg', 0.9);
-            const res = await fetch('/api/upload', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ empCode: employeeCode, image: imageData })
-            });
+            const vid = document.getElementById('face-video'), can = document.createElement('canvas');
+            can.width = vid.videoWidth; can.height = vid.videoHeight;
+            const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
+            const res = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg', 0.9)}) });
+            if ((await res.json()).success) {
+                if (currentMode === "BOTH") { document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
+                else { stopCamera(); showStage("THANKS"); }
+            }
+        };
+
+        document.getElementById('palm-capture-btn').onclick = async () => {
+            if (!palmReady) return;
+            const vid = document.getElementById('palm-video'), can = document.createElement('canvas');
+            can.width = vid.videoWidth; can.height = vid.videoHeight;
+            const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
+            const res = await fetch('/api/palm/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg',0.85)}) });
             if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
         };
 
-        function showStage(s) {
-            currentStage = s;
-            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.getElementById(`stage-${s.toLowerCase()}`).classList.add('active');
-            const cont = document.querySelector('.container');
-            if (s === "FACE") cont.classList.add('wide'); else cont.classList.remove('wide');
-            updateProgress();
-        }
-
-        function updateProgress() {
-            document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('active'));
-            if (currentStage === "VERIFY") document.getElementById('dot-1').classList.add('active');
-            if (currentStage === "FACE") document.getElementById('dot-2').classList.add('active');
-        }
-
-        function goBack() { stopCamera(); showStage("VERIFY"); }
-        
-        // Initial sync
-        fetch('/api/config/registration-mode').then(r => r.json()).then(d => {
-            if (d.success) {
-                if (d.mode !== "BOTH") document.getElementById('dot-3').style.display = 'none';
-            }
-        });
+        fetch('/api/config/registration-mode').then(r=>r.json()).then(d=>{ if(d.success) currentMode = d.mode; updateProgress(); updateStageLabels(); });
+        if (typeof io !== 'undefined') { io().on('config_updated', (d) => { currentMode = d.mode; updateProgress(); updateStageLabels(); }); }
     </script>
 </body>
 </html>
