@@ -14,7 +14,7 @@ const compression = require("compression");
 const path = require("path");
 const mongoose = require("mongoose");
 const { connectDB } = require("./config/db");
-const socketUtil = require("./utils/socket");
+const sse = require("./utils/sse");
 
 const employeeRoutes = require("./routes/employee.routes");
 const uploadRoutes = require("./routes/upload.routes");
@@ -24,7 +24,6 @@ const configRoutes = require("./routes/config.routes");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketUtil.init(server); // Initialize Socket.IO
 const PORT = process.env.PORT || 3001;
 
 // ─── Database ─────────────────────────────────────────────────────────────────
@@ -54,6 +53,7 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
+app.get("/api/stream", sse.handleConnection);
 app.use("/api/employee", ensureDB, employeeRoutes);
 app.use("/api/upload", ensureDB, uploadRoutes);
 app.use("/api/download", ensureDB, downloadRoutes);
@@ -87,7 +87,7 @@ app.get("*", (req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`\n🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-    console.log(`🔌 WebSockets enabled via Socket.IO`);
+    console.log(`🔌 Real-time updates enabled via SSE`);
   });
 
   process.on("SIGTERM", () => {

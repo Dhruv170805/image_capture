@@ -5,8 +5,6 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
 // Cached connection for serverless environments
 let cached = global.mongoose;
 
@@ -15,6 +13,8 @@ if (!cached) {
 }
 
 async function connectDB() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  
   if (!MONGODB_URI) {
     console.error("❌ [DB Error] MONGODB_URI is missing in environment variables.");
     return;
@@ -26,8 +26,7 @@ async function connectDB() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
-      dbName: "Data"
+      bufferCommands: false
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

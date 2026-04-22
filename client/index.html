@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Biometric Registration | PRINT ELECTRONICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -40,7 +39,6 @@
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); pointer-events: none; }
         .silhouette-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 85%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; transition: all 0.3s; }
         .valid .silhouette-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.05); }
-        /* Restored Old Palm Machine UI */
         .palm-guide-box { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 260px; height: 360px; border: 3px dashed rgba(255,255,255,0.4);
@@ -62,36 +60,14 @@
         .success-checkmark { width: 60px; height: 60px; margin: 0 auto 1rem; border-radius: 50%; border: 4px solid var(--success); position: relative; }
         .check-icon { position: absolute; width: 30px; height: 15px; border-left: 5px solid var(--success); border-bottom: 5px solid var(--success); transform: rotate(-45deg); top: 18px; left: 15px; }
 
-        /* Employee Detail Card */
         .emp-detail-card {
-            background: white;
-            border-radius: 20px;
-            padding: 1.2rem;
-            margin-top: 1.5rem;
-            border: 2px solid #e2e8f0;
-            display: none;
-            text-align: left;
-            animation: fadeIn 0.4s ease;
+            background: white; border-radius: 20px; padding: 1.2rem; margin-top: 1.5rem; border: 2px solid #e2e8f0;
+            display: none; text-align: left; animation: fadeIn 0.4s ease;
         }
-        .emp-detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .emp-detail-item {
-            margin-bottom: 8px;
-        }
-        .emp-detail-label {
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: #64748b;
-            text-transform: uppercase;
-        }
-        .emp-detail-value {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
+        .emp-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .emp-detail-item { margin-bottom: 8px; }
+        .emp-detail-label { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .emp-detail-value { font-size: 1rem; font-weight: 800; color: var(--primary); }
 
         @media (max-width: 480px) { .card { padding: 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; } .container { padding: 0; } .nav-center { font-size: 1rem; } }
     </style>
@@ -118,7 +94,6 @@
                         <input type="text" id="emp-code" placeholder="ENTER CODE OR EMPALIAS CODE" autofocus style="margin-bottom: 10px;">
                         <button id="search-btn" class="btn" style="padding: 0.8rem; margin-bottom: 1rem; background: var(--accent);"><span>તપાસો / SEARCH 🔍</span></button>
                     </div>
-
                     <div id="emp-detail-card" class="emp-detail-card">
                         <div class="emp-detail-grid" style="grid-template-columns: 1fr 1fr; row-gap: 15px;">
                             <div class="emp-detail-item" style="grid-column: span 2;">
@@ -162,15 +137,12 @@
                     <div id="auto-capture-status" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">સ્થિર કરો... STABILIZING...</div>
                     <video id="palm-video" autoplay playsinline></video>
                     <canvas id="palm-canvas"></canvas>
-
-                    <!-- Restored Old Palm UI Guide Box -->
                     <div class="palm-guide-box">
                         <svg class="palm-hand-svg" viewBox="0 0 200 250">
                             <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
                         </svg>
                         <p style="color:white; font-weight:900; font-size: 0.9rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); text-align:center;">જમણો હાથ ગોઠવો<br>Align Full Right Hand</p>
                     </div>
-
                     <div class="instruction-box" id="palm-instr">Show Right Hand / હાથ બતાવો</div>
                 </div>
                 <button id="palm-capture-btn" class="btn btn-capture" disabled><span>તૈયાર / READY 🖐️</span></button>
@@ -190,52 +162,53 @@
         </div>
     </div>
     <script>
-        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false, autoCaptureTimer = null, globalTimeoutTimer = null, faceImageData = null;
-        const faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-        faceMesh.onResults(onFaceResults);
-        const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5 });
-        hands.onResults(onPalmResults);
+        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false, autoCaptureTimer = null, globalTimeoutTimer = null;
+        let faceMesh = null, hands = null, faceImageDataBlob = null;
+
+        function startTimeout() {
+            clearGlobalTimeout();
+            globalTimeoutTimer = setTimeout(() => { stopCamera(); showStage("TIMEOUT"); }, 30000);
+        }
+        function clearGlobalTimeout() { if (globalTimeoutTimer) { clearTimeout(globalTimeoutTimer); globalTimeoutTimer = null; } }
+
+        async function initModels() {
+            if (currentMode !== "PALM" && !faceMesh) {
+                faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+                faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+                faceMesh.onResults(onFaceResults);
+            }
+            if (currentMode !== "FACE" && !hands) {
+                hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+                hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5 });
+                hands.onResults(onPalmResults);
+            }
+        }
 
         function onFaceResults(results) {
             if (currentStage !== "FACE") return;
+            startTimeout(); // Reset timeout on activity
             const wrap = document.getElementById('stage-face').querySelector('#camera-wrap'), instr = document.getElementById('face-instr'), btn = document.getElementById('face-capture-btn');
             const autoStatus = document.getElementById('auto-capture-status-face');
-            
             if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) { 
                 faceReady = false; wrap.className = "invalid"; instr.textContent = "No Face Detected"; btn.disabled = true; 
                 if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
                 if (autoStatus) autoStatus.style.display = 'none';
                 return; 
             }
-
             if (results.multiFaceLandmarks.length > 1) {
-                faceReady = false; wrap.className = "invalid"; instr.textContent = "Multiple Faces Detected! / એક જ ચહેરો રાખો"; btn.disabled = true;
+                faceReady = false; wrap.className = "invalid"; instr.textContent = "Multiple Faces! / એક જ ચહેરો રાખો"; btn.disabled = true;
                 if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
                 if (autoStatus) autoStatus.style.display = 'none';
                 return;
             }
-            
             const lm = results.multiFaceLandmarks[0];
             const yaw = Math.abs(lm[1].x - (lm[33].x + lm[263].x) / 2) * 100;
             const roll = Math.abs(lm[33].y - lm[263].y) * 100;
             const eyes = (lm[145].y - lm[159].y < 0.012) || (lm[374].y - lm[386].y < 0.012);
-            
-            if (yaw > 5 || roll > 5) { 
-                faceReady = false; instr.textContent = "Keep Face Straight / ચહેરો સીધો રાખો"; wrap.className = "invalid"; 
-                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
-                if (autoStatus) autoStatus.style.display = 'none';
-            }
-            else if (eyes) { 
-                faceReady = false; instr.textContent = "Keep Eyes Open / આંખો ખુલ્લી રાખો"; 
-                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
-                if (autoStatus) autoStatus.style.display = 'none';
-            }
+            if (yaw > 5 || roll > 5) { faceReady = false; instr.textContent = "Keep Face Straight"; wrap.className = "invalid"; if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } if (autoStatus) autoStatus.style.display = 'none'; }
+            else if (eyes) { faceReady = false; instr.textContent = "Keep Eyes Open"; if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } if (autoStatus) autoStatus.style.display = 'none'; }
             else { 
-                if (!faceReady) {
-                    faceReady = true; instr.textContent = "Perfect! Hold Still / બરાબર છે, સ્થિર રહો"; wrap.className = "valid"; btn.classList.add('ready');
-                    if (autoStatus) autoStatus.style.display = 'block';
+                if (!faceReady) { faceReady = true; instr.textContent = "Perfect! Hold Still"; wrap.className = "valid"; btn.classList.add('ready'); if (autoStatus) autoStatus.style.display = 'block';
                     if (!autoCaptureTimer) autoCaptureTimer = setTimeout(() => { if (faceReady) triggerFaceCapture(); }, 1500);
                 }
             }
@@ -244,46 +217,27 @@
 
         function onPalmResults(results) {
             if (currentStage !== "PALM") return;
+            startTimeout(); // Reset timeout on activity
             const wrap = document.getElementById('stage-palm').querySelector('#camera-wrap'), instr = document.getElementById('palm-instr'), btn = document.getElementById('palm-capture-btn');
             const canvas = document.getElementById('palm-canvas'), ctx = canvas.getContext('2d'), autoStatus = document.getElementById('auto-capture-status');
             ctx.clearRect(0,0,canvas.width,canvas.height); 
             let detected = false;
-
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 1) {
-                palmReady = false; wrap.className = "invalid"; instr.textContent = "Multiple Hands Detected! / એક જ હાથ રાખો"; autoStatus.style.display = 'none';
+                palmReady = false; wrap.className = "invalid"; instr.textContent = "Multiple Hands! / એક જ હાથ રાખો"; autoStatus.style.display = 'none';
                 if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
-                btn.disabled = true;
-                return;
+                btn.disabled = true; return;
             }
-
             if (results.multiHandLandmarks && results.multiHandLandmarks.length === 1 && results.multiHandedness[0].label === "Left") {
-                detected = true;
-                drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color:'#10b981', lineWidth:3});
+                detected = true; drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color:'#10b981', lineWidth:3});
             }
-            
             if (detected && !palmReady) {
-                palmReady = true; wrap.className = "valid"; instr.textContent = "Hold Still / સ્થિર રહો"; autoStatus.style.display = 'block';
+                palmReady = true; wrap.className = "valid"; instr.textContent = "Hold Still"; autoStatus.style.display = 'block';
                 if (!autoCaptureTimer) autoCaptureTimer = setTimeout(() => { if (palmReady) triggerPalmCapture(); }, 1500);
             } else if (!detected && palmReady) {
-                palmReady = false; wrap.className = "invalid"; instr.textContent = "Show Right Hand / હાથ બતાવો"; autoStatus.style.display = 'none';
+                palmReady = false; wrap.className = "invalid"; instr.textContent = "Show Right Hand"; autoStatus.style.display = 'none';
                 if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
             }
             btn.disabled = !palmReady;
-        }
-
-        function startTimeout() {
-            clearGlobalTimeout();
-            globalTimeoutTimer = setTimeout(() => {
-                stopCamera();
-                showStage("TIMEOUT");
-            }, 30000); // 30 seconds
-        }
-
-        function clearGlobalTimeout() {
-            if (globalTimeoutTimer) {
-                clearTimeout(globalTimeoutTimer);
-                globalTimeoutTimer = null;
-            }
         }
 
         async function startCamera(isPalm = false) {
@@ -298,22 +252,8 @@
             } catch (e) { alert("Camera Error"); }
         }
 
-        function stopCamera() { 
-            if (activeCamera) { activeCamera.stop(); activeCamera = null; } 
-            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } 
-            if(autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } 
-            clearGlobalTimeout();
-        }
-        
-        function goBack() { 
-            stopCamera(); 
-            if (currentStage === "PALM" && currentMode === "BOTH") {
-                showStage("FACE"); startCamera(false);
-            } else {
-                showStage("VERIFY"); 
-            }
-        }
-        
+        function stopCamera() { if (activeCamera) { activeCamera.stop(); activeCamera = null; } if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } if(autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } clearGlobalTimeout(); }
+        function goBack() { stopCamera(); if (currentStage === "PALM" && currentMode === "BOTH") { showStage("FACE"); startCamera(false); } else { showStage("VERIFY"); } }
         function showStage(s) {
             currentStage = s.toUpperCase();
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
@@ -323,112 +263,90 @@
             if (s !== "VERIFY" && s !== "THANKS" && s !== "TIMEOUT") cont.classList.add('wide'); else cont.classList.remove('wide');
             updateProgress(); updateStageLabels();
         }
-
-        function updateStageLabels() {
-            const pb = document.getElementById('palm-back-btn');
-            if (pb) pb.style.display = "block";
-        }
-
+        function updateStageLabels() { const pb = document.getElementById('palm-back-btn'); if (pb) pb.style.display = "block"; }
         function updateProgress() {
             document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('active'));
-            if (currentMode !== "BOTH") document.getElementById('dot-3').style.display = 'none';
-            else document.getElementById('dot-3').style.display = 'block';
-            
+            if (currentMode !== "BOTH") document.getElementById('dot-3').style.display = 'none'; else document.getElementById('dot-3').style.display = 'block';
             if (currentStage === "VERIFY") document.getElementById('dot-1').classList.add('active');
             if (currentStage === "FACE") document.getElementById('dot-2').classList.add('active');
             if (currentStage === "PALM") document.getElementById(currentMode === "BOTH" ? 'dot-3' : 'dot-2').classList.add('active');
         }
 
-        document.getElementById('search-btn').onclick = async () => {
-            const input = document.getElementById('emp-code').value.trim(); 
-            if (!input) return;
-            
-            const btn = document.getElementById('search-btn');
-            btn.disabled = true;
-            btn.textContent = "SEARCHING...";
-
+        const handleSearch = async () => {
+            const input = document.getElementById('emp-code').value.trim(); if (!input) return;
+            const btn = document.getElementById('search-btn'); btn.disabled = true; btn.textContent = "SEARCHING...";
             try {
-                const res = await fetch(`/api/employee/${input}`); 
-                const result = await res.json();
-                
+                const res = await fetch(`/api/employee/${input}`); const result = await res.json();
                 if (result.success) {
-                    employeeCode = result.data.EmployeeCode; 
-                    employeeName = result.data.Name;
-                    
-                    // Show Card
-                    document.getElementById('det-name').textContent = employeeName;
-                    document.getElementById('det-dept').textContent = result.data.Department;
-                    document.getElementById('det-code').textContent = employeeCode;
-                    document.getElementById('det-alias').textContent = result.data.EmpAliasCode;
-                    document.getElementById('emp-detail-card').style.display = 'block';
-                    document.getElementById('verify-btn').disabled = false;
-                } else {
-                    alert("Employee not found! / કર્મચારી મળ્યા નથી");
-                    document.getElementById('emp-detail-card').style.display = 'none';
-                }
-            } catch (e) {
-                alert("Connection error");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = "<span>તપાસો / SEARCH 🔍</span>";
-            }
+                    employeeCode = result.data.EmployeeCode; employeeName = result.data.Name;
+                    document.getElementById('det-name').textContent = employeeName; document.getElementById('det-dept').textContent = result.data.Department; document.getElementById('det-code').textContent = employeeCode; document.getElementById('det-alias').textContent = result.data.EmpAliasCode;
+                    document.getElementById('emp-detail-card').style.display = 'block'; document.getElementById('verify-btn').disabled = false;
+                    await initModels();
+                } else { alert("Employee not found!"); document.getElementById('emp-detail-card').style.display = 'none'; }
+            } catch (e) { alert("Connection error"); } finally { btn.disabled = false; btn.innerHTML = "<span>તપાસો / SEARCH 🔍</span>"; }
         };
 
+        document.getElementById('search-btn').onclick = handleSearch;
+        document.getElementById('emp-code').onkeydown = (e) => { if(e.key === 'Enter') handleSearch(); };
         document.getElementById('verify-btn').onclick = () => {
-            if (currentMode === "PALM") { 
-                document.getElementById('palm-user-name').textContent = employeeName; 
-                showStage("PALM"); 
-                startCamera(true); 
-            } else { 
-                document.getElementById('face-user-name').textContent = employeeName; 
-                showStage("FACE"); 
-                startCamera(false); 
-            }
+            if (currentMode === "PALM") { document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
+            else { document.getElementById('face-user-name').textContent = employeeName; showStage("FACE"); startCamera(false); }
         };
 
         async function triggerPalmCapture() {
-            const vid = document.getElementById('palm-video'), can = document.createElement('canvas');
+            const vid = document.getElementById('palm-video'), can = document.createElement('canvas'), btn = document.getElementById('palm-capture-btn');
             can.width = vid.videoWidth; can.height = vid.videoHeight;
             const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
-            const palmData = can.toDataURL('image/jpeg', 0.85);
-
-            if (currentMode === "BOTH" && faceImageData) {
-                const fRes = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:faceImageData}) });
-                const fResult = await fRes.json();
-                if (!fResult.success) {
-                    alert("Face upload failed: " + fResult.message);
-                    return;
-                }
-            }
-
-            const res = await fetch('/api/palm/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:palmData}) });
-            if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
+            
+            btn.disabled = true; btn.textContent = "UPLOADING...";
+            
+            can.toBlob(async (palmBlob) => {
+                try {
+                    if (currentMode === "BOTH" && faceImageDataBlob) {
+                        const fData = new FormData(); fData.append('empCode', employeeCode); fData.append('image', faceImageDataBlob, 'face.jpg');
+                        const fRes = await fetch('/api/upload', { method:'POST', body: fData });
+                        if (!(await fRes.json()).success) { alert("Face upload failed! Going back."); showStage("FACE"); startCamera(false); return; }
+                    }
+                    const pData = new FormData(); pData.append('empCode', employeeCode); pData.append('image', palmBlob, 'palm.jpg');
+                    const res = await fetch('/api/palm/register', { method:'POST', body: pData });
+                    if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
+                    else { alert("Palm upload failed!"); btn.disabled = false; btn.textContent = "તૈયાર / READY 🖐️"; }
+                } catch(e) { alert("Upload error"); btn.disabled = false; }
+            }, 'image/jpeg', 0.85);
         }
 
         async function triggerFaceCapture() {
             if (!faceReady) return;
-            const vid = document.getElementById('face-video'), can = document.createElement('canvas');
+            const vid = document.getElementById('face-video'), can = document.createElement('canvas'), btn = document.getElementById('face-capture-btn');
             can.width = vid.videoWidth; can.height = vid.videoHeight;
             const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
-            const faceData = can.toDataURL('image/jpeg', 0.9);
+            
+            btn.disabled = true; btn.textContent = "UPLOADING...";
 
-            if (currentMode === "BOTH") {
-                faceImageData = faceData; 
-                stopCamera(); 
-                document.getElementById('palm-user-name').textContent = employeeName; 
-                showStage("PALM"); 
-                startCamera(true);
-            } else {
-                const res = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:faceData}) });
-                if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
-            }
+            can.toBlob(async (blob) => {
+                if (currentMode === "BOTH") {
+                    faceImageDataBlob = blob; stopCamera(); document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true);
+                } else {
+                    const fd = new FormData(); fd.append('empCode', employeeCode); fd.append('image', blob, 'face.jpg');
+                    try {
+                        const res = await fetch('/api/upload', { method:'POST', body: fd });
+                        if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
+                        else { alert("Upload failed"); btn.disabled = false; }
+                    } catch(e) { alert("Network error"); btn.disabled = false; }
+                }
+            }, 'image/jpeg', 0.9);
         }
 
         document.getElementById('face-capture-btn').onclick = triggerFaceCapture;
         document.getElementById('palm-capture-btn').onclick = triggerPalmCapture;
-
         fetch('/api/config/registration-mode').then(r=>r.json()).then(d=>{ if(d.success) currentMode = d.mode; updateProgress(); updateStageLabels(); });
-        if (typeof io !== 'undefined') { io().on('config_updated', (d) => { currentMode = d.mode; updateProgress(); updateStageLabels(); }); }
+        const sse = new EventSource('/api/stream');
+        sse.addEventListener('config_updated', (e) => {
+            const data = JSON.parse(e.data);
+            currentMode = data.mode;
+            updateProgress();
+            updateStageLabels();
+        });
     </script>
 </body>
 </html>

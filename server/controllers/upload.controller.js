@@ -13,12 +13,23 @@ const ImageLog = require("../models/ImageLog");
 const Employee = require("../models/Employee");
 const EmployeePalm = require("../models/EmployeePalm");
 const Config = require("../models/Config");
+const sse = require("../utils/sse");
 
 async function uploadImage(req, res) {
   try {
-    const { empCode, image } = req.body;
+    let { empCode, image } = req.body;
+    let inputBuffer;
 
-    if (!empCode || !image) {
+    // Handle Multipart (multer)
+    if (req.file) {
+      inputBuffer = req.file.buffer;
+    } else if (image) {
+      // Handle Base64 (legacy)
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      inputBuffer = Buffer.from(base64Data, "base64");
+    }
+
+    if (!empCode || !inputBuffer) {
       return res.status(400).json({ success: false, error: "MISSING_FIELDS", message: "empCode and image are required." });
     }
 
@@ -26,9 +37,6 @@ async function uploadImage(req, res) {
     if (!empResult.success) {
       return res.status(403).json({ success: false, error: "UNAUTHORIZED", message: empResult.message });
     }
-
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    const inputBuffer = Buffer.from(base64Data, "base64");
 
     if (inputBuffer.length > MAX_INPUT_BYTES) {
       return res.status(413).json({ success: false, error: "IMAGE_TOO_LARGE", message: `Image must be under 5MB.` });
@@ -49,11 +57,8 @@ async function uploadImage(req, res) {
       FileSizeBytes: processed.length,
     });
 
-    // Notify clients via WebSocket
-    try {
-      const io = require("../utils/socket").getIO();
-      io.emit("registration_updated", { type: "FACE", employeeCode: empResult.data.EmployeeCode });
-    } catch (sErr) { console.error("Socket error", sErr); }
+    // Notify clients via SSE
+    sse.sendEvent("registration_updated", { type: "FACE", employeeCode: empResult.data.EmployeeCode });
 
     return res.status(200).json({
       success: true,
@@ -98,7 +103,7 @@ async function downloadAll(req, res) {
   try {
     const istNow = getISTDate();
     const pad = (n) => n.toString().padStart(2, "0");
-    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${pad(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
+    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}_${size(istNow.getUTCHours())}-${pad(istNow.getUTCMinutes())}`;
     
     const zipFilename = `biometric_full_backup_${timestamp}.zip`;
     await streamImagesToZip(res, {}, zipFilename);
@@ -110,11 +115,12 @@ async function downloadAll(req, res) {
   }
 }
 
+function size(n) { return n.toString().padStart(2, "0"); }
+
 async function getStats(req, res) {
   try {
     const totalEmployees = await Employee.countDocuments({ IsActive: true });
     
-    // Get unique codes from both collections
     const faceCodes = await ImageLog.distinct("EmployeeCode");
     const palmCodes = await EmployeePalm.distinct("EmployeeCode");
     

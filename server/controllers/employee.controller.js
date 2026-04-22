@@ -41,12 +41,19 @@ async function downloadTemplate(req, res) {
 
 async function uploadEmployeesExcel(req, res) {
   try {
-    const { excelData } = req.body; // Expecting base64 string
-    if (!excelData) {
-      return res.status(400).json({ success: false, message: "excelData is required." });
+    const { excelData } = req.body; 
+    let buffer;
+
+    if (req.file) {
+      buffer = req.file.buffer;
+    } else if (excelData) {
+      buffer = Buffer.from(excelData, "base64");
     }
 
-    const buffer = Buffer.from(excelData, "base64");
+    if (!buffer) {
+      return res.status(400).json({ success: false, message: "Excel file or data is required." });
+    }
+
     const result = await employeeService.uploadExcelEmployees(buffer);
 
     if (!result.success && result.errors) {

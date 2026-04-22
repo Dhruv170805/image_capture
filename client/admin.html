@@ -5,256 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Biometric System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { 
-            --primary: #003366; 
-            --bg: #f1f5f9; 
-            --text: #0f172a; 
-            --accent: #3b82f6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
+            --primary: #003366; --bg: #f1f5f9; --text: #0f172a; --accent: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
             --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
             --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -6px rgba(0, 0, 0, 0.1);
         }
         html, body { height: 100vh; margin: 0; overflow: hidden; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; line-height: 1.4; }
-        
-        .navbar {
-            background: white;
-            padding: 0.6rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            z-index: 100;
-            flex-shrink: 0;
-        }
+        .navbar { background: white; padding: 0.6rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 100; flex-shrink: 0; }
         .navbar img { height: 45px; }
         .nav-center { font-size: 1.1rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
-
-        .dashboard-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem;
-            overflow: hidden;
-            box-sizing: border-box;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-            flex-shrink: 0;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1rem;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid rgba(255,255,255,0.7);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 80px;
-        }
+        .dashboard-container { flex: 1; display: flex; flex-direction: column; padding: 1rem; overflow: hidden; box-sizing: border-box; max-width: 1600px; margin: 0 auto; width: 100%; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; flex-shrink: 0; }
+        .stat-card { background: white; padding: 1rem; border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.7); position: relative; overflow: hidden; transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
         .stat-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
         .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
         .stat-card.success-bg::after { background: var(--success); }
         .stat-card.accent::after { background: var(--warning); }
-
         .stat-card p { margin: 0; color: #64748b; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-card h2 { margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
         .stat-card .detail { margin-top: 5px; font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
-
-        .main-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 1rem;
-            min-height: 0; /* Important for flex child with overflow */
-        }
-
-        .left-col {
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .card { 
-            background: white; 
-            padding: 1.2rem; 
-            border-radius: 20px; 
-            box-shadow: var(--card-shadow); 
-            border: 1px solid rgba(255,255,255,0.8);
-            display: flex;
-            flex-direction: column;
-        }
-        
+        .main-grid { flex: 1; display: grid; grid-template-columns: 1fr 360px; gap: 1rem; min-height: 0; }
+        .left-col { display: flex; flex-direction: column; min-height: 0; }
+        .card { background: white; padding: 1.2rem; border-radius: 20px; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; }
         .left-col .card { flex: 1; min-height: 0; }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.8rem;
-            border-bottom: 1px solid #f1f5f9;
-            flex-shrink: 0;
-        }
-        
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
         h3 { margin: 0; font-size: 1rem; font-weight: 800; color: var(--primary); }
-
-        .table-wrap { 
-            flex: 1;
-            overflow-y: auto;
-            border-radius: 12px; 
-            border: 1px solid #f1f5f9;
-            background: white;
-        }
-        /* Custom scrollbar for table */
+        .table-wrap { flex: 1; overflow-y: auto; border-radius: 12px; border: 1px solid #f1f5f9; background: white; }
         .table-wrap::-webkit-scrollbar { width: 6px; }
-        .table-wrap::-webkit-scrollbar-track { background: #f8fafc; }
         .table-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { background: #f8fafc; padding: 0.8rem 1rem; text-align: left; font-weight: 700; color: #475569; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 10; }
         td { padding: 0.8rem 1rem; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
         tr:hover td { background: #f8fafc; }
-        
-        .btn { 
-            background: var(--primary); color: white; border: none; padding: 0.6rem 1rem; border-radius: 10px; 
-            cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
-            font-size: 0.85rem; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.05); width: 100%;
-        }
+        .btn { background: var(--primary); color: white; border: none; padding: 0.6rem 1rem; border-radius: 10px; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.05); width: 100%; }
         .btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
-
-        .right-col {
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            padding-right: 4px;
-        }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .right-col { overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-right: 4px; }
         .right-col::-webkit-scrollbar { width: 4px; }
         .right-col::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.7rem; margin-bottom: 0.4rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        input[type="text"], input[type="date"], select {
-            width: 100%; padding: 0.6rem 0.8rem; border: 2px solid #f1f5f9; border-radius: 10px;
-            box-sizing: border-box; font-family: inherit; font-weight: 600; color: var(--text);
-            background: #f8fafc; font-size: 0.85rem;
-        }
-
+        input[type="text"], input[type="date"], select { width: 100%; padding: 0.6rem 0.8rem; border: 2px solid #f1f5f9; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-weight: 600; color: var(--text); background: #f8fafc; font-size: 0.85rem; }
         .pagination-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
-        
         .page-btn { background: white; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-weight: 700; color: #64748b; cursor: pointer; font-size: 0.75rem; }
         .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-
-        /* Apple-Inspired Premium Notification System - Dark Dynamic Island Style */
-        #notification-container {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-            align-items: flex-end;
-        }
-
-        .notification {
-            background: rgba(0, 0, 0, 0.75); /* Darker glass for better contrast */
-            backdrop-filter: blur(20px) saturate(160%);
-            -webkit-backdrop-filter: blur(20px) saturate(160%);
-            color: #ffffff;
-            padding: 10px 22px;
-            border-radius: 50px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 240px;
-            max-width: 480px;
-            border-top: 1px solid rgba(255, 255, 255, 0.15); /* Subtle glass highlight */
-            animation: appleSlideIn 0.5s cubic-bezier(0.2, 1, 0.2, 1) forwards;
-            pointer-events: auto;
-            position: relative;
-            white-space: nowrap;
-        }
-
-        /* Removed bottom borders for cleaner look */
-        
-        .notification-icon {
-            font-size: 1.2rem;
-        }
-
-        .notification-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            overflow: hidden;
-        }
-
-        .notification-title {
-            font-weight: 800;
-            font-size: 0.85rem;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .notification-msg {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        @keyframes appleSlideIn {
-            from { opacity: 0; transform: scale(0.9) translateY(-20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        @keyframes appleSlideOut {
-            to { opacity: 0; transform: scale(0.9) translateY(-10px); }
-        }
-
-        .notification.closing {
-            animation: appleSlideOut 0.4s cubic-bezier(0.5, 0, 0.5, 1) forwards;
-        }
-
-        /* Hide progress bar for a cleaner look, or make it very subtle */
-        .notification-progress {
-            display: none;
-        }
-
-        @media (max-width: 1100px) {
-            html, body { height: auto; overflow: visible; }
-            .dashboard-container { height: auto; overflow: visible; }
-            .main-grid { grid-template-columns: 1fr; height: auto; overflow: visible; }
-            .right-col { height: auto; overflow: visible; }
-            .table-wrap { max-height: 500px; }
-        }
+        #notification-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; align-items: flex-end; }
+        .notification { background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); color: #ffffff; padding: 10px 22px; border-radius: 50px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1); display: flex; align-items: center; gap: 12px; min-width: 240px; max-width: 480px; border-top: 1px solid rgba(255, 255, 255, 0.15); animation: appleSlideIn 0.5s cubic-bezier(0.2, 1, 0.2, 1) forwards; pointer-events: auto; position: relative; white-space: nowrap; }
+        .notification-icon { font-size: 1.2rem; }
+        .notification-content { flex: 1; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        .notification-title { font-weight: 800; font-size: 0.85rem; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .notification-msg { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.95); text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        @keyframes appleSlideIn { from { opacity: 0; transform: scale(0.9) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes appleSlideOut { to { opacity: 0; transform: scale(0.9) translateY(-10px); } }
+        .notification.closing { animation: appleSlideOut 0.4s cubic-bezier(0.5, 0, 0.5, 1) forwards; }
+        .notification-progress { display: none; }
+        .error-log { margin-top: 1rem; padding: 1rem; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; max-height: 200px; overflow-y: auto; display: none; }
+        .error-item { color: #b91c1c; font-size: 0.75rem; margin-bottom: 4px; font-family: monospace; }
+        @media (max-width: 1100px) { html, body { height: auto; overflow: visible; } .dashboard-container { height: auto; overflow: visible; } .main-grid { grid-template-columns: 1fr; height: auto; overflow: visible; } .right-col { height: auto; overflow: visible; } .table-wrap { max-height: 500px; } }
     </style>
 </head>
 <body>
-
 <nav class="navbar">
     <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
         <img src="logo.png" alt="Logo" style="height: 45px;">
@@ -264,537 +76,121 @@
         </div>
     </div>
     <div class="nav-center">⚙️ Admin Dashboard</div>
-    <div class="nav-right">
-        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem; background: #f1f5f9; padding: 8px 16px; border-radius: 8px;">Back to Capture</a>
-    </div>
+    <div class="nav-right"><a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem; background: #f1f5f9; padding: 8px 16px; border-radius: 8px;">Back to Capture</a></div>
 </nav>
-
 <div id="notification-container"></div>
-
 <div class="dashboard-container">
     <div class="stats-grid">
-        <div class="stat-card">
-            <p>Total Staff</p>
-            <h2 id="stat-total">0</h2>
-        </div>
-        <div class="stat-card success-bg">
-            <p>Registered</p>
-            <h2 id="stat-registered">0</h2>
-            <div id="stat-details" class="detail"></div>
-        </div>
-        <div class="stat-card accent">
-            <p>Remaining</p>
-            <h2 id="stat-remaining">0</h2>
-        </div>
+        <div class="stat-card"><p>Total Staff</p><h2 id="stat-total">0</h2></div>
+        <div class="stat-card success-bg"><p>Registered</p><h2 id="stat-registered">0</h2><div id="stat-details" class="detail"></div></div>
+        <div class="stat-card accent"><p>Remaining</p><h2 id="stat-remaining">0</h2></div>
     </div>
-
     <div class="main-grid">
         <div class="left-col">
             <div class="card">
-                <div class="card-header">
-                    <h3>Recent Registrations</h3>
-                    <button id="load-logs-btn" class="page-btn" style="background: var(--primary); color: white; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; cursor: pointer;">REFRESH</button>
-                </div>
-
-                <button id="download-selected-btn" class="btn" style="margin-bottom: 1.5rem; background: var(--accent);" disabled>
-                    <span class="loader" id="loader-selected"></span>
-                    DOWNLOAD SELECTED (ZIP)
-                </button>
-
+                <div class="card-header"><h3>Recent Registrations</h3><button id="load-logs-btn" class="page-btn" style="background: var(--primary); color: white; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; cursor: pointer;">REFRESH</button></div>
+                <button id="download-selected-btn" class="btn" style="margin-bottom: 1.5rem; background: var(--accent);" disabled><span class="loader" id="loader-selected"></span>DOWNLOAD SELECTED (ZIP)</button>
                 <div class="table-wrap">
                     <table id="logs-table">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="select-all"></th>
-                                <th>Type</th>
-                                <th>Name</th>
-                                <th>Code</th>
-                                <th>Captured (IST)</th>
-                                <th>Size</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-body">
-                            <!-- JS Inject -->
-                        </tbody>
+                        <thead><tr><th><input type="checkbox" id="select-all"></th><th>Type</th><th>Name</th><th>Code</th><th>Captured (IST)</th><th>Size</th></tr></thead>
+                        <tbody id="logs-body"></tbody>
                     </table>
                 </div>
-
-                <div class="pagination-ctrl">
-                    <button id="prev-page" class="page-btn">PREV</button>
-                    <span id="page-info" style="font-size: 0.75rem; font-weight: 800; color: #64748b;">Page 1 of 1</span>
-                    <button id="next-page" class="page-btn">NEXT</button>
-                </div>
+                <div class="pagination-ctrl"><button id="prev-page" class="page-btn">PREV</button><span id="page-info" style="font-size: 0.75rem; font-weight: 800; color: #64748b;">Page 1 of 1</span><button id="next-page" class="page-btn">NEXT</button></div>
             </div>
         </div>
-
         <div class="right-col">
             <div class="card">
                 <h3>1. System Mode</h3>
-                <div class="input-group" style="margin-top: 15px;">
-                    <label>Registration Type</label>
-                    <select id="config-mode">
-                        <option value="FACE">Face Only</option>
-                        <option value="PALM">Palm Only</option>
-                        <option value="BOTH">Both (Face + Palm)</option>
-                    </select>
-                </div>
-                <button id="save-config-btn" class="btn">
-                    <span class="loader" id="loader-config"></span>
-                    UPDATE SYSTEM MODE
-                </button>
+                <div class="input-group" style="margin-top: 15px;"><label>Registration Type</label><select id="config-mode"><option value="FACE">Face Only</option><option value="PALM">Palm Only</option><option value="BOTH">Both (Face + Palm)</option></select></div>
+                <button id="save-config-btn" class="btn"><span class="loader" id="loader-config"></span>UPDATE SYSTEM MODE</button>
             </div>
-
             <div class="card">
                 <h3>2. Upload (Excel)</h3>
                 <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                    <a href="/api/employee/template/download" class="btn" style="background: #1e293b; text-decoration: none;">
-                        📥 DOWNLOAD TEMPLATE (.xlsx)
-                    </a>
-                    
-                    <div style="padding: 15px; border: 2px dashed #e2e8f0; border-radius: 12px; text-align: center; background: #f8fafc;">
-                        <label style="display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 8px;">SELECT FILLED EXCEL</label>
-                        <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="font-size: 0.7rem; width: 100%;">
-                    </div>
-
-                    <button id="upload-excel-btn" class="btn" style="background: var(--primary);">
-                        <span class="loader" id="loader-excel"></span>
-                        UPLOAD EXCEL DATA
-                    </button>
-
+                    <a href="/api/employee/template/download" class="btn" style="background: #1e293b; text-decoration: none;">📥 DOWNLOAD TEMPLATE (.xlsx)</a>
+                    <div style="padding: 15px; border: 2px dashed #e2e8f0; border-radius: 12px; text-align: center; background: #f8fafc;"><label style="display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 8px;">SELECT FILLED EXCEL</label><input type="file" id="excel-file-input" accept=".xlsx, .xls" style="font-size: 0.7rem; width: 100%;"></div>
+                    <button id="upload-excel-btn" class="btn" style="background: var(--primary);"><span class="loader" id="loader-excel"></span>UPLOAD EXCEL DATA</button>
                     <div id="excel-error-log" class="error-log"></div>
                 </div>
             </div>
-
             <div class="card">
                 <h3>3. Download Biometrics</h3>
-                <div class="input-group" style="margin-top: 15px;">
-                    <label>Filter Type</label>
-                    <select id="download-filter-type" onchange="toggleDownloadFilter()">
-                        <option value="all">Full Backup (All)</option>
-                        <option value="range">Date Range</option>
-                    </select>
-                </div>
-                <div id="date-filter-group" style="display: none; margin-bottom: 1rem;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="input-group" style="margin:0">
-                            <label>Start</label>
-                            <input type="date" id="date-start">
-                        </div>
-                        <div class="input-group" style="margin:0">
-                            <label>End</label>
-                            <input type="date" id="date-end">
-                        </div>
-                    </div>
-                </div>
-                <button id="main-download-btn" class="btn" style="background: var(--primary);">
-                    <span class="loader" id="loader-main-download"></span>
-                    GENERATE ZIP
-                </button>
+                <div class="input-group" style="margin-top: 15px;"><label>Filter Type</label><select id="download-filter-type" onchange="toggleDownloadFilter()"><option value="all">Full Backup (All)</option><option value="range">Date Range</option></select></div>
+                <div id="date-filter-group" style="display: none; margin-bottom: 1rem;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div class="input-group" style="margin:0"><label>Start</label><input type="date" id="date-start"></div><div class="input-group" style="margin:0"><label>End</label><input type="date" id="date-end"></div></div></div>
+                <button id="main-download-btn" class="btn" style="background: var(--primary);"><span class="loader" id="loader-main-download"></span>GENERATE ZIP</button>
             </div>
-
             <div class="card">
                 <h3>4. Report</h3>
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
-                    <div style="display: flex; gap: 10px;">
-                        <a href="/api/download/registered-excel" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">Excel Report</a>
-                        <a href="/api/download/registered-csv" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">CSV List</a>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <a href="/api/download/not-registered-excel" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">Excel Missing</a>
-                        <a href="/api/download/not-registered-csv" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">CSV Missing</a>
-                    </div>
-                    <div style="padding: 10px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
-                        <p style="font-size: 0.7rem; color: #64748b; margin: 0; display: flex; justify-content: space-between;">
-                            <span style="color: #10b981; font-weight: 800;">● REGISTERED DATA</span>
-                            <span style="color: #ef4444; font-weight: 800;">● MISSING DATA</span>
-                        </p>
-                    </div>
+                    <div style="display: flex; gap: 10px;"><a href="/api/download/registered-excel" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">Excel Report</a><a href="/api/download/registered-csv" class="btn" style="text-decoration: none; background: #10b981; flex: 1;">CSV List</a></div>
+                    <div style="display: flex; gap: 10px;"><a href="/api/download/not-registered-excel" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">Excel Missing</a><a href="/api/download/not-registered-csv" class="btn" style="text-decoration: none; background: #ef4444; flex: 1;">CSV Missing</a></div>
+                    <div style="padding: 10px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;"><p style="font-size: 0.7rem; color: #64748b; margin: 0; display: flex; justify-content: space-between;"><span style="color: #10b981; font-weight: 800;">● REGISTERED DATA</span><span style="color: #ef4444; font-weight: 800;">● MISSING DATA</span></p></div>
                 </div>
             </div>
-
             <div class="card">
                 <h3>5. Download By Employee Code</h3>
-                <div class="input-group" style="margin-top: 15px;">
-                    <label>Filter Type</label>
-                    <select id="emp-download-type" onchange="toggleEmpFilter()">
-                        <option value="single">Single Code</option>
-                        <option value="range">Code Range</option>
-                    </select>
-                </div>
-                
-                <div id="single-code-group">
-                    <div class="input-group">
-                        <label>Employee Code</label>
-                        <input type="text" id="emp-code-input" placeholder="Ex: 1234">
-                    </div>
-                </div>
-
-                <div id="range-code-group" style="display: none;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="input-group">
-                            <label>From Code</label>
-                            <input type="text" id="emp-code-start" placeholder="1001">
-                        </div>
-                        <div class="input-group">
-                            <label>To Code</label>
-                            <input type="text" id="emp-code-end" placeholder="1050">
-                        </div>
-                    </div>
-                </div>
-
-                <button id="download-emp-btn" class="btn" style="background: #334155;">
-                    <span class="loader" id="loader-emp"></span>
-                    DOWNLOAD FILE
-                </button>
+                <div class="input-group" style="margin-top: 15px;"><label>Filter Type</label><select id="emp-download-type" onchange="toggleEmpFilter()"><option value="single">Single Code</option><option value="range">Code Range</option></select></div>
+                <div id="single-code-group"><div class="input-group"><label>Employee Code</label><input type="text" id="emp-code-input" placeholder="Ex: 1234"></div></div>
+                <div id="range-code-group" style="display: none;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><div class="input-group"><label>From Code</label><input type="text" id="emp-code-start" placeholder="1001"></div><div class="input-group"><label>To Code</label><input type="text" id="emp-code-end" placeholder="1050"></div></div></div>
+                <button id="download-emp-btn" class="btn" style="background: #334155;"><span class="loader" id="loader-emp"></span>DOWNLOAD FILE</button>
             </div>
         </div>
     </div>
 </div>
-
 <script>
-    const loadLogsBtn = document.getElementById('load-logs-btn');
-    const downloadSelectedBtn = document.getElementById('download-selected-btn');
-    const logsTable = document.getElementById('logs-table');
-    const logsBody = document.getElementById('logs-body');
-    const selectAllCb = document.getElementById('select-all');
-
-    let loadedLogs = [];
-    let currentPage = 1;
-    let totalPages = 1;
-    const itemsPerPage = 20;
-
-    function toggleDownloadFilter() {
-        const type = document.getElementById('download-filter-type').value;
-        document.getElementById('date-filter-group').style.display = type === 'range' ? 'block' : 'none';
-    }
-
-    window.toggleEmpFilter = () => {
-        const type = document.getElementById('emp-download-type').value;
-        document.getElementById('single-code-group').style.display = type === 'single' ? 'block' : 'none';
-        document.getElementById('range-code-group').style.display = type === 'range' ? 'block' : 'none';
-    };
-
-    const NotificationManager = {
-        container: document.getElementById('notification-container'),
-        
-        show(title, message, type = 'info', duration = 3000) {
-            const id = Date.now();
-            const icons = {
-                success: '✅',
-                info: 'ℹ️',
-                warning: '⚠️',
-                registration: '📸',
-                config: '⚙️'
-            };
-
-            const html = `
-                <div class="notification ${type}" id="notif-${id}">
-                    <div class="notification-icon">${icons[type] || icons.info}</div>
-                    <div class="notification-content">
-                        <span class="notification-title">${title}:</span>
-                        <span class="notification-msg">${message}</span>
-                    </div>
-                </div>
-            `;
-
-            this.container.insertAdjacentHTML('afterbegin', html);
-            
-            setTimeout(() => {
-                this.close(id);
-            }, duration);
-
-            return id;
-        },
-
-        close(id) {
-            const el = document.getElementById(`notif-${id}`);
-            if (el) {
-                el.classList.add('closing');
-                setTimeout(() => el.remove(), 400);
-            }
-        }
-    };
-
-    function setStatus(msg, type) {
-        if (!msg) return;
-        NotificationManager.show(type.toUpperCase(), msg, type === 'success' ? 'success' : 'warning');
-    }
-
-    async function loadStats() {
-        try {
-            const res = await fetch('/api/upload/stats');
-            const result = await res.json();
-            if (result.success) {
-                document.getElementById('stat-total').textContent = result.totalEmployees;
-                document.getElementById('stat-registered').textContent = result.totalRegistered;
-                document.getElementById('stat-remaining').textContent = result.remaining;
-                
-                // Add Face / Palm details
-                const detailEl = document.getElementById('stat-details');
-                if (detailEl) {
-                    detailEl.innerHTML = `Face: <b>${result.totalFace}</b> &nbsp;|&nbsp; Palm: <b>${result.totalPalm}</b><br><small style="color: #94a3b8;">Mode: ${result.mode}</small>`;
-                }
-            }
-        } catch (err) { console.error('Stats error', err); }
-    }
-
-    async function loadConfig() {
-        try {
-            const res = await fetch('/api/config/registration-mode');
-            const data = await res.json();
-            if (data.success) document.getElementById('config-mode').value = data.mode;
-        } catch (err) { console.error('Config load error', err); }
-    }
-
-    async function fetchLogs(page = 1) {
-        const prevBtn = document.getElementById('prev-page');
-        const nextBtn = document.getElementById('next-page');
-        const refreshBtn = document.getElementById('load-logs-btn');
-        
-        try {
-            if (prevBtn) prevBtn.disabled = true;
-            if (nextBtn) nextBtn.disabled = true;
-            if (refreshBtn) refreshBtn.disabled = true;
-
-            currentPage = page;
-            const res = await fetch(`/api/upload/logs?page=${page}&limit=${itemsPerPage}`);
-            const result = await res.json();
-            if (result.success) {
-                loadedLogs = result.data || [];
-                totalPages = Math.ceil(result.total / itemsPerPage) || 1;
-                renderTable();
-                updatePaginationUI();
-            }
-        } catch (err) { 
-            console.error('Logs fetch error', err); 
-            updatePaginationUI(); // Re-enable based on state
-        } finally {
-            if (refreshBtn) refreshBtn.disabled = false;
-        }
-    }
-
-    function renderTable() {
-        logsBody.innerHTML = '';
-        selectAllCb.checked = false; // Reset select all on new render
-        
-        if (!loadedLogs || loadedLogs.length === 0) {
-            logsBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #64748b; font-weight: 600;">No records found.</td></tr>';
-            checkSelection();
-            return;
-        }
-
-        loadedLogs.forEach(log => {
-            const tr = document.createElement('tr');
-            
-            // Build the badges
-            let badges = '';
-            if (log.hasFace) badges += `<span style="padding: 4px 8px; border-radius: 8px; font-size: 1.1rem; background: #dbeafe; margin-right: 5px;" title="FACE">👤</span>`;
-            if (log.hasPalm) badges += `<span style="padding: 4px 8px; border-radius: 8px; font-size: 1.1rem; background: #d1fae5;" title="PALM">✋</span>`;
-
-            // Collect IDs for bulk download
-            const ids = [];
-            if (log.faceId) ids.push(log.faceId);
-            if (log.palmId) ids.push(log.palmId);
-            const valueStr = ids.join(',');
-
-            // Since we store as IST (UTC+5:30) shifted date, we use UTC components for display
-            const d = new Date(log.CapturedAt);
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const dateStr = `${d.getUTCDate().toString().padStart(2, '0')} ${months[d.getUTCMonth()]}, ${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`;
-
-            tr.innerHTML = `
-                <td><input type="checkbox" class="log-checkbox" value="${valueStr}" onchange="checkSelection()"></td>
-                <td>${badges}</td>
-                <td style="font-weight:700">${log.EmployeeName}</td>
-                <td style="color:#64748b; font-weight:600">${log.EmployeeCode}</td>
-                <td>${dateStr}</td>
-                <td style="color:#94a3b8">${((log.faceSize + log.palmSize) / 1024).toFixed(1)} KB</td>
-            `;
-            logsBody.appendChild(tr);
-        });
-        checkSelection(); // Update bulk download button state
-    }
-
-    function updatePaginationUI() {
-        document.getElementById('prev-page').disabled = currentPage <= 1;
-        document.getElementById('next-page').disabled = currentPage >= totalPages;
-        document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-    }
-
-    window.checkSelection = () => {
-        const cbs = document.querySelectorAll('.log-checkbox:checked');
-        downloadSelectedBtn.disabled = cbs.length === 0;
-    };
-
-    selectAllCb.onclick = (e) => {
-        document.querySelectorAll('.log-checkbox').forEach(cb => cb.checked = e.target.checked);
-        checkSelection();
-    };
-
+    const loadLogsBtn = document.getElementById('load-logs-btn'), downloadSelectedBtn = document.getElementById('download-selected-btn'), logsTable = document.getElementById('logs-table'), logsBody = document.getElementById('logs-body'), selectAllCb = document.getElementById('select-all');
+    let loadedLogs = [], currentPage = 1, totalPages = 1; const itemsPerPage = 20;
+    function toggleDownloadFilter() { const type = document.getElementById('download-filter-type').value; document.getElementById('date-filter-group').style.display = type === 'range' ? 'block' : 'none'; }
+    window.toggleEmpFilter = () => { const type = document.getElementById('emp-download-type').value; document.getElementById('single-code-group').style.display = type === 'single' ? 'block' : 'none'; document.getElementById('range-code-group').style.display = type === 'range' ? 'block' : 'none'; };
+    const NotificationManager = { container: document.getElementById('notification-container'), show(title, message, type = 'info', duration = 3000) { const id = Date.now(), icons = { success: '✅', info: 'ℹ️', warning: '⚠️', registration: '📸', config: '⚙️' }; const html = `<div class="notification ${type}" id="notif-${id}"><div class="notification-icon">${icons[type] || icons.info}</div><div class="notification-content"><span class="notification-title">${title}:</span><span class="notification-msg">${message}</span></div></div>`; this.container.insertAdjacentHTML('afterbegin', html); setTimeout(() => this.close(id), duration); return id; }, close(id) { const el = document.getElementById(`notif-${id}`); if (el) { el.classList.add('closing'); setTimeout(() => el.remove(), 400); } } };
+    function setStatus(msg, type) { if (!msg) return; NotificationManager.show(type.toUpperCase(), msg, type === 'success' ? 'success' : 'warning'); }
+    async function loadStats() { try { const res = await fetch('/api/upload/stats'); const result = await res.json(); if (result.success) { document.getElementById('stat-total').textContent = result.totalEmployees; document.getElementById('stat-registered').textContent = result.totalRegistered; document.getElementById('stat-remaining').textContent = result.remaining; const detailEl = document.getElementById('stat-details'); if (detailEl) { detailEl.innerHTML = `Face: <b>${result.totalFace}</b> &nbsp;|&nbsp; Palm: <b>${result.totalPalm}</b><br><small style="color: #94a3b8;">Mode: ${result.mode}</small>`; } } } catch (err) { console.error('Stats error', err); } }
+    async function loadConfig() { try { const res = await fetch('/api/config/registration-mode'); const data = await res.json(); if (data.success) document.getElementById('config-mode').value = data.mode; } catch (err) { console.error('Config load error', err); } }
+    async function fetchLogs(page = 1) { const prevBtn = document.getElementById('prev-page'), nextBtn = document.getElementById('next-page'), refreshBtn = document.getElementById('load-logs-btn'); try { if (prevBtn) prevBtn.disabled = true; if (nextBtn) nextBtn.disabled = true; if (refreshBtn) refreshBtn.disabled = true; currentPage = page; const res = await fetch(`/api/upload/logs?page=${page}&limit=${itemsPerPage}`); const result = await res.json(); if (result.success) { loadedLogs = result.data || []; totalPages = Math.ceil(result.total / itemsPerPage) || 1; renderTable(); updatePaginationUI(); } } catch (err) { console.error('Logs fetch error', err); updatePaginationUI(); } finally { if (refreshBtn) refreshBtn.disabled = false; } }
+    function renderTable() { logsBody.innerHTML = ''; selectAllCb.checked = false; if (!loadedLogs || loadedLogs.length === 0) { logsBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #64748b; font-weight: 600;">No records found.</td></tr>'; checkSelection(); return; } loadedLogs.forEach(log => { const tr = document.createElement('tr'); let badges = ''; if (log.hasFace) badges += `<span style="padding: 4px 8px; border-radius: 8px; font-size: 1.1rem; background: #dbeafe; margin-right: 5px;" title="FACE">👤</span>`; if (log.hasPalm) badges += `<span style="padding: 4px 8px; border-radius: 8px; font-size: 1.1rem; background: #d1fae5;" title="PALM">✋</span>`; const ids = []; if (log.faceId) ids.push(log.faceId); if (log.palmId) ids.push(log.palmId); const valueStr = ids.join(','); const d = new Date(log.CapturedAt); const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const dateStr = `${d.getUTCDate().toString().padStart(2, '0')} ${months[d.getUTCMonth()]}, ${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`; tr.innerHTML = `<td><input type="checkbox" class="log-checkbox" value="${valueStr}" onchange="checkSelection()"></td><td>${badges}</td><td style="font-weight:700">${log.EmployeeName}</td><td style="color:#64748b; font-weight:600">${log.EmployeeCode}</td><td>${dateStr}</td><td style="color:#94a3b8">${((log.faceSize + log.palmSize) / 1024).toFixed(1)} KB</td>`; logsBody.appendChild(tr); }); checkSelection(); }
+    function updatePaginationUI() { document.getElementById('prev-page').disabled = currentPage <= 1; document.getElementById('next-page').disabled = currentPage >= totalPages; document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`; }
+    window.checkSelection = () => { const total = document.querySelectorAll('.log-checkbox').length, checked = document.querySelectorAll('.log-checkbox:checked').length; selectAllCb.checked = total > 0 && total === checked; downloadSelectedBtn.disabled = checked === 0; };
+    selectAllCb.onclick = (e) => { document.querySelectorAll('.log-checkbox').forEach(cb => cb.checked = e.target.checked); checkSelection(); };
     document.getElementById('prev-page').onclick = () => fetchLogs(currentPage - 1);
     document.getElementById('next-page').onclick = () => fetchLogs(currentPage + 1);
     loadLogsBtn.onclick = () => fetchLogs(1);
-
-    document.getElementById('save-config-btn').onclick = async () => {
-        const mode = document.getElementById('config-mode').value;
-        const btn = document.getElementById('save-config-btn');
-        const loader = document.getElementById('loader-config');
-        try {
-            btn.disabled = true; btn.setAttribute('aria-busy', 'true'); loader.style.display = 'inline-block';
-            const res = await fetch('/api/config/update-mode', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode })
-            });
-            const data = await res.json();
-            if (data.success) {
-                setStatus('Registration mode updated to ' + mode, 'success');
-            } else {
-                setStatus('Update failed: ' + (data.message || 'Unknown error'), 'error');
-            }
-        } catch (err) { setStatus('Failed to update mode', 'error'); }
-        finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
-    };
-
-    // Excel Upload Logic
-    document.getElementById('upload-excel-btn').onclick = async () => {
-        const fileInput = document.getElementById('excel-file-input');
-        const errorLog = document.getElementById('excel-error-log');
-        const btn = document.getElementById('upload-excel-btn');
-        const loader = document.getElementById('loader-excel');
+    document.getElementById('save-config-btn').onclick = async () => { const mode = document.getElementById('config-mode').value, btn = document.getElementById('save-config-btn'), loader = document.getElementById('loader-config'); try { btn.disabled = true; loader.style.display = 'inline-block'; const res = await fetch('/api/config/update-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) }); const data = await res.json(); if (data.success) setStatus('Registration mode updated to ' + mode, 'success'); else setStatus('Update failed: ' + (data.message || 'Unknown error'), 'error'); } catch (err) { setStatus('Failed to update mode', 'error'); } finally { btn.disabled = false; loader.style.display = 'none'; } };
+    document.getElementById('upload-excel-btn').onclick = async () => { const fileInput = document.getElementById('excel-file-input'), errorLog = document.getElementById('excel-error-log'), btn = document.getElementById('upload-excel-btn'), loader = document.getElementById('loader-excel'); if (!fileInput.files[0]) return setStatus('Select Excel file first', 'error'); const file = fileInput.files[0]; errorLog.style.display = 'none'; errorLog.innerHTML = ''; btn.disabled = true; loader.style.display = 'inline-block'; const fd = new FormData(); fd.append('excelData', file); try { const res = await fetch('/api/employee/upload-excel', { method: 'POST', body: fd }); const result = await res.json(); if (result.success) { setStatus(`Successfully uploaded ${result.count} employees!`, 'success'); fileInput.value = ''; loadStats(); } else if (result.errors) { setStatus(result.message, 'error'); errorLog.style.display = 'block'; errorLog.innerHTML = '<div style="font-weight:800; font-size:0.7rem; margin-bottom:8px; color:#b91c1c">VALIDATION ERRORS:</div>'; result.errors.forEach(err => { errorLog.innerHTML += `<div class="error-item">Row ${err.row}: ${err.error}</div>`; }); } else setStatus(result.message || 'Upload failed', 'error'); } catch (err) { setStatus('Network error during upload', 'error'); } finally { btn.disabled = false; loader.style.display = 'none'; } };
+    async function triggerDownload(url, method, body, loaderId, btnId, filenamePrefix) { const btn = document.getElementById(btnId), loader = document.getElementById(loaderId); try { btn.disabled = true; loader.style.display = 'inline-block'; const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : null }); if (!res.ok) { const errorData = await res.json(); throw new Error(errorData.message || 'Download failed'); } const blob = await res.blob(), a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = filenamePrefix + '.zip'; a.click(); window.URL.revokeObjectURL(a.href); setStatus('Download Started', 'success'); } catch (err) { setStatus(err.message || 'Download failed', 'error'); } finally { btn.disabled = false; loader.style.display = 'none'; } }
+    downloadSelectedBtn.onclick = () => { const ids = Array.from(document.querySelectorAll('.log-checkbox:checked')).flatMap(cb => cb.value.split(',').filter(id => id)); triggerDownload('/api/download/zip', 'POST', { ids }, 'loader-selected', 'download-selected-btn', 'selection'); };
+    document.getElementById('main-download-btn').onclick = () => { const filterType = document.getElementById('download-filter-type').value; if (filterType === 'all') triggerDownload('/api/upload/download-all', 'GET', null, 'loader-main-download', 'main-download-btn', 'all_biometrics'); else { const startDate = document.getElementById('date-start').value, endDate = document.getElementById('date-end').value; if (!startDate || !endDate) return setStatus('Select dates', 'error'); triggerDownload('/api/download/date', 'POST', { startDate, endDate }, 'loader-main-download', 'main-download-btn', 'range'); } };
+    document.getElementById('download-emp-btn').onclick = () => { const type = document.getElementById('emp-download-type').value; if (type === 'single') { const code = document.getElementById('emp-code-input').value.trim(); if (!code) return setStatus('Enter an employee code', 'error'); triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee_' + code); } else { const startCode = document.getElementById('emp-code-start').value.trim(), endCode = document.getElementById('emp-code-end').value.trim(); if (!startCode || !endCode) return setStatus('Enter both start and end codes', 'error'); triggerDownload('/api/download/range', 'POST', { startCode, endCode }, 'loader-emp', 'download-emp-btn', `range_${startCode}_to_${endCode}`); } };
+    let sse;
+    function initSSE() {
+        if (sse) sse.close();
+        sse = new EventSource('/api/stream');
         
-        if (!fileInput.files[0]) return setStatus('Select Excel file first', 'error');
-        
-        const file = fileInput.files[0];
-        errorLog.style.display = 'none';
-        errorLog.innerHTML = '';
-        
-        btn.disabled = true;
-        loader.style.display = 'inline-block';
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const base64Data = e.target.result.split(',')[1];
-                const res = await fetch('/api/employee/upload-excel', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ excelData: base64Data })
-                });
-
-                const result = await res.json();
-                
-                if (result.success) {
-                    setStatus(`Successfully uploaded ${result.count} employees!`, 'success');
-                    fileInput.value = '';
-                    loadStats();
-                } else if (result.errors) {
-                    setStatus(result.message, 'error');
-                    errorLog.style.display = 'block';
-                    errorLog.innerHTML = '<div style="font-weight:800; font-size:0.7rem; margin-bottom:8px; color:#b91c1c">VALIDATION ERRORS:</div>';
-                    result.errors.forEach(err => {
-                        errorLog.innerHTML += `<div class="error-item">Row ${err.row}: ${err.error}</div>`;
-                    });
-                } else {
-                    setStatus(result.message || 'Upload failed', 'error');
-                }
-            } catch (err) {
-                setStatus('Network error during upload', 'error');
-            } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    async function triggerDownload(url, method, body, loaderId, btnId, filenamePrefix) {
-        const btn = document.getElementById(btnId);
-        const loader = document.getElementById(loaderId);
-        try {
-            btn.disabled = true; btn.setAttribute('aria-busy', 'true'); loader.style.display = 'inline-block';
-            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : null });
-            
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Download failed');
-            }
-
-            const blob = await res.blob();
-            const a = document.createElement('a');
-            a.href = window.URL.createObjectURL(blob);
-            a.download = filenamePrefix + '.zip';
-            a.click();
-            setStatus('Download Started', 'success');
-        } catch (err) { 
-            setStatus(err.message || 'Download failed', 'error'); 
-        } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); loader.style.display = 'none'; }
-    }
-
-    downloadSelectedBtn.onclick = () => {
-        const ids = Array.from(document.querySelectorAll('.log-checkbox:checked'))
-            .flatMap(cb => cb.value.split(',').filter(id => id));
-        triggerDownload('/api/download/zip', 'POST', { ids }, 'loader-selected', 'download-selected-btn', 'selection');
-    };
-
-    document.getElementById('main-download-btn').onclick = () => {
-        const filterType = document.getElementById('download-filter-type').value;
-        if (filterType === 'all') {
-            triggerDownload('/api/upload/download-all', 'GET', null, 'loader-main-download', 'main-download-btn', 'all_biometrics');
-        } else {
-            const startDate = document.getElementById('date-start').value;
-            const endDate = document.getElementById('date-end').value;
-            if (!startDate || !endDate) return setStatus('Select dates', 'error');
-            triggerDownload('/api/download/date', 'POST', { startDate, endDate }, 'loader-main-download', 'main-download-btn', 'range');
-        }
-    };
-
-    document.getElementById('download-emp-btn').onclick = () => {
-        const type = document.getElementById('emp-download-type').value;
-        if (type === 'single') {
-            const code = document.getElementById('emp-code-input').value.trim();
-            if (!code) return setStatus('Enter an employee code', 'error');
-            triggerDownload(`/api/download/employee/${code}`, 'GET', null, 'loader-emp', 'download-emp-btn', 'employee_' + code);
-        } else {
-            const startCode = document.getElementById('emp-code-start').value.trim();
-            const endCode = document.getElementById('emp-code-end').value.trim();
-            if (!startCode || !endCode) return setStatus('Enter both start and end codes', 'error');
-            triggerDownload('/api/download/range', 'POST', { startCode, endCode }, 'loader-emp', 'download-emp-btn', `range_${startCode}_to_${endCode}`);
-        }
-    };
-
-    // Initialize Socket.IO early
-    let socket;
-    if (typeof io !== 'undefined') {
-        socket = io();
-        socket.on('connect', () => {
-            console.log('🔌 Connected to Server via WebSockets');
+        sse.onopen = () => {
+            console.log('🔌 SSE Connected');
             NotificationManager.show('Connected', 'Real-time updates enabled', 'success', 3000);
-        });
-        socket.on('registration_updated', async (data) => {
-            console.log('🔔 New Registration:', data);
+        };
+
+        sse.addEventListener('registration_updated', async (e) => {
+            const data = JSON.parse(e.data);
             NotificationManager.show('New Registration', `Employee ${data.employeeCode} captured ${data.type}`, 'registration');
             await loadStats();
             if (currentPage === 1) fetchLogs(1);
         });
-        socket.on('config_updated', (data) => {
-            console.log('⚙️ Config Updated:', data);
+
+        sse.addEventListener('config_updated', (e) => {
+            const data = JSON.parse(e.data);
             NotificationManager.show('Config Updated', `Registration mode changed to: ${data.mode}`, 'config');
             const modeEl = document.getElementById('config-mode');
             if (modeEl) modeEl.value = data.mode;
         });
-        socket.on('disconnect', () => {
-            console.warn('🔌 Disconnected from Server');
-            NotificationManager.show('Disconnected', 'Real-time updates suspended', 'warning');
-        });
-    }
 
-    async function init() {
-        await loadStats();
-        await loadConfig();
-        fetchLogs(1);
+        sse.onerror = (err) => {
+            console.error('SSE Error:', err);
+            // EventSource automatically retries by default
+        };
     }
-    init();
+    async function init() { await loadStats(); await loadConfig(); fetchLogs(1); initSSE(); } init();
 </script>
 </body>
 </html>

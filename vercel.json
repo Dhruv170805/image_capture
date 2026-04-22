@@ -10,35 +10,30 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "server/app.js"
+      "source": "/api/(.*)",
+      "destination": "server/app.js"
     },
     {
-      "src": "/admin",
-      "dest": "client/admin.html"
+      "source": "/admin",
+      "destination": "client/admin.html"
     },
     {
-      "src": "/admin.html",
-      "dest": "client/admin.html"
+      "source": "/admin.html",
+      "destination": "client/admin.html"
     },
     {
-      "src": "/logo.png",
-      "dest": "client/logo.png"
+      "source": "/logo.png",
+      "destination": "client/logo.png"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "client/assets/$1"
+      "source": "/assets/(.*)",
+      "destination": "client/assets/$1"
     },
     {
-      "src": "/(.*)",
-      "dest": "client/$1",
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "dest": "client/index.html"
+      "source": "/(.*)",
+      "destination": "client/index.html"
     }
   ]
 }

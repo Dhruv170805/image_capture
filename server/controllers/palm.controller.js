@@ -2,12 +2,21 @@ const EmployeePalm = require("../models/EmployeePalm");
 const Employee = require("../models/Employee");
 const { processPalmImage } = require("../services/palm.service");
 const { getISTDate } = require("../utils/time.util");
+const sse = require("../utils/sse");
 
 async function registerPalm(req, res) {
   try {
-    const { empCode, image } = req.body;
+    let { empCode, image } = req.body;
+    let inputBuffer;
 
-    if (!empCode || !image) {
+    if (req.file) {
+      inputBuffer = req.file.buffer;
+    } else if (image) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      inputBuffer = Buffer.from(base64Data, "base64");
+    }
+
+    if (!empCode || !inputBuffer) {
       return res.status(400).json({ success: false, message: "empCode and image are required." });
     }
 
@@ -15,9 +24,6 @@ async function registerPalm(req, res) {
     if (!employee) {
       return res.status(404).json({ success: false, message: "Employee not found." });
     }
-
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    const inputBuffer = Buffer.from(base64Data, "base64");
 
     const processed = await processPalmImage(inputBuffer);
 
@@ -35,11 +41,8 @@ async function registerPalm(req, res) {
 
     await newPalm.save();
 
-    // Notify clients via WebSocket
-    try {
-      const io = require("../utils/socket").getIO();
-      io.emit("registration_updated", { type: "PALM", employeeCode: employee.EmployeeCode });
-    } catch (sErr) { console.error("Socket error", sErr); }
+    // Notify clients via SSE
+    sse.sendEvent("registration_updated", { type: "PALM", employeeCode: employee.EmployeeCode });
 
     return res.status(200).json({
       success: true,

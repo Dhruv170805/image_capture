@@ -4,6 +4,8 @@
 
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
 const { 
   validateEmployee, 
   uploadEmployeesCSV, 
@@ -16,7 +18,7 @@ const {
 router.get("/template/download", downloadTemplate);
 
 // POST /api/employee/upload-excel - Upload employee data via Excel
-router.post("/upload-excel", uploadEmployeesExcel);
+router.post("/upload-excel", upload.single("excelData"), uploadEmployeesExcel);
 
 // POST /api/employee/upload-csv - Legacy CSV upload
 router.post("/upload-csv", uploadEmployeesCSV);
