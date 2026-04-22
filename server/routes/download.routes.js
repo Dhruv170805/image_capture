@@ -7,6 +7,7 @@ const router = express.Router();
 const { 
   downloadByIds, 
   downloadByEmployee, 
+  downloadByEmployeeRange,
   downloadByDate, 
   downloadRegisteredCSV, 
   downloadNotRegisteredCSV,
@@ -19,6 +20,9 @@ router.post("/zip", downloadByIds);
 
 // GET /api/download/employee/:code - Download all for a specific employee
 router.get("/employee/:code", downloadByEmployee);
+
+// POST /api/download/range - Download by employee code range
+router.post("/range", downloadByEmployeeRange);
 
 // POST /api/download/date - Download by date range
 router.post("/date", downloadByDate);

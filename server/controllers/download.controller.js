@@ -200,6 +200,30 @@ async function downloadByIds(req, res) {
   }
 }
 
+// POST /api/download/range
+async function downloadByEmployeeRange(req, res) {
+  try {
+    const { startCode, endCode } = req.body;
+    if (!startCode || !endCode) {
+      return res.status(400).json({ success: false, message: "startCode and endCode are required." });
+    }
+
+    const s = startCode.trim().toUpperCase();
+    const e = endCode.trim().toUpperCase();
+
+    const istNow = getISTDate();
+    const pad = (n) => n.toString().padStart(2, "0");
+    const timestamp = `${istNow.getUTCFullYear()}-${pad(istNow.getUTCMonth() + 1)}-${pad(istNow.getUTCDate())}`;
+    const zipFilename = `biometric_range_${s}_to_${e}_${timestamp}.zip`;
+
+    // Filter using range
+    await streamImagesToZip(res, { EmployeeCode: { $gte: s, $lte: e } }, zipFilename);
+  } catch (err) {
+    console.error("[Download By Range Error]", err);
+    if (!res.headersSent) res.status(500).json({ success: false, message: "Server error during download." });
+  }
+}
+
 // GET /api/download/employee/:code
 async function downloadByEmployee(req, res) {
   try {
@@ -253,6 +277,7 @@ async function downloadByDate(req, res) {
 module.exports = { 
   downloadByIds, 
   downloadByEmployee, 
+  downloadByEmployeeRange,
   downloadByDate, 
   downloadRegisteredCSV, 
   downloadNotRegisteredCSV,

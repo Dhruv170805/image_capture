@@ -151,13 +151,13 @@
 
 <nav class="navbar">
     <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
-        <img src="logo.png" alt="Logo">
+        <img src="logo.png" alt="Logo" style="height: 45px;">
         <div style="display: flex; flex-direction: column; line-height: 1; text-align: left;">
-            <span style="font-weight: 900; color: var(--primary); font-size: 1rem; letter-spacing: 0.5px; text-transform: uppercase;">Print</span>
-            <span style="font-weight: 800; color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Electronics</span>
+            <span style="font-weight: 900; color: #003366; font-size: 1.4rem; letter-spacing: 0.5px; text-transform: uppercase;">Print</span>
+            <span style="font-weight: 800; color: #003366; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Electronics</span>
         </div>
     </div>
-    <div class="nav-center">Enrollment 4 NG P&P</div>
+    <div class="nav-center">Enroll 4 NG P&P</div>
     <div class="nav-right">
         <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">Back to Face</a>
     </div>
@@ -222,6 +222,17 @@
             </button>
         </div>
 
+        <!-- TIMEOUT -->
+        <div id="stage-timeout" class="step">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">😢</div>
+            <h1 style="margin:0; color: var(--invalid); font-weight: 900; font-size: 2.2rem;">સમય સમાપ્ત!</h1>
+            <h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Timeout / No Activity</h2>
+            <p style="color: #64748b; font-weight: 700; margin-bottom: 2rem; font-size: 1.1rem;">મહેરબાની કરીને ફરી પ્રયાસ કરો<br>Please try again</p>
+            <button class="btn" onclick="location.reload()">
+                <span>Retry / ફરી પ્રયાસ કરો</span>
+            </button>
+        </div>
+
     </div>
 </div>
 
@@ -242,10 +253,31 @@
     let isReady = false;
     let cameraActive = false;
     let activeCameraInstance = null;
+    let globalTimeoutTimer = null;
+
+    function startTimeout() {
+        clearGlobalTimeout();
+        globalTimeoutTimer = setTimeout(() => {
+            if (activeCameraInstance) {
+                activeCameraInstance.stop();
+                activeCameraInstance = null;
+            }
+            cameraActive = false;
+            showStage('timeout');
+        }, 30000);
+    }
+
+    function clearGlobalTimeout() {
+        if (globalTimeoutTimer) {
+            clearTimeout(globalTimeoutTimer);
+            globalTimeoutTimer = null;
+        }
+    }
 
     function showStage(stage) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(`stage-${stage}`).classList.add('active');
+        const stageEl = document.getElementById(`stage-${stage}`);
+        if (stageEl) stageEl.classList.add('active');
         if (stage === 'capture') container.classList.add('wide');
         else container.classList.remove('wide');
     }
@@ -281,6 +313,7 @@
             activeCameraInstance = null;
         }
         cameraActive = false;
+        clearGlobalTimeout();
         showStage('verify');
     }
 
@@ -296,10 +329,20 @@
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
         isReady = false;
+        
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 1) {
+            instruction.textContent = "Multiple Hands Detected! / એક જ હાથ રાખો";
+            guideBox.classList.remove('valid');
+            captureBtn.disabled = true;
+            captureBtn.classList.remove('ready');
+            canvasCtx.restore();
+            return;
+        }
+
         instruction.textContent = "Show your RIGHT HAND / હાથ બતાવો";
         guideBox.classList.remove('valid');
 
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length === 1) {
             const handedness = results.multiHandedness[0];
             if (handedness.label === "Left") { // Mirrored
                 isReady = true;
@@ -341,6 +384,7 @@
             });
             await activeCameraInstance.start();
             cameraActive = true;
+            startTimeout();
             videoElement.addEventListener('loadedmetadata', () => {
                 canvasElement.width = videoElement.videoWidth;
                 canvasElement.height = videoElement.videoHeight;
@@ -368,6 +412,7 @@
             if ((await res.json()).success) {
                 showToast(`Success!`, 'success');
                 if (activeCameraInstance) activeCameraInstance.stop();
+                clearGlobalTimeout();
                 showStage('thanks');
             } else { showToast("Failed", 'error'); captureBtn.disabled = false; }
         } catch (err) { showToast("Network Error", "error"); captureBtn.disabled = false; }

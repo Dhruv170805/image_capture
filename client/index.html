@@ -67,13 +67,13 @@
 <body>
     <nav class="navbar">
         <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
-            <img src="logo.png" alt="Logo">
+            <img src="logo.png" alt="Logo" style="height: 45px;">
             <div style="display: flex; flex-direction: column; line-height: 1; text-align: left;">
-                <span style="font-weight: 900; color: var(--primary); font-size: 1rem; text-transform: uppercase;">Print</span>
-                <span style="font-weight: 800; color: var(--accent); font-size: 0.75rem; text-transform: uppercase;">Electronics</span>
+                <span style="font-weight: 900; color: #003366; font-size: 1.4rem; text-transform: uppercase;">Print</span>
+                <span style="font-weight: 800; color: #003366; font-size: 1rem; text-transform: uppercase;">Electronics</span>
             </div>
         </div>
-        <div class="nav-center">Enrollment 4 NG P&P</div>
+        <div class="nav-center">Enroll 4 NG P&P</div>
         <div class="nav-right"></div>
     </nav>
     <div class="container">
@@ -117,10 +117,19 @@
             <div id="stage-thanks" class="step">
                 <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;"><div class="success-checkmark"><div class="check-icon"></div></div><h1 style="margin:0; color: var(--success); font-weight: 900; font-size: 2.2rem;">સફળ!</h1><h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Registration Complete</h2><button class="btn" onclick="location.reload()"><span>Register Another / બીજું</span></button></div>
             </div>
+            <div id="stage-timeout" class="step">
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-size: 5rem; margin-bottom: 1rem;">😢</div>
+                    <h1 style="margin:0; color: var(--invalid); font-weight: 900; font-size: 2.2rem;">સમય સમાપ્ત!</h1>
+                    <h2 style="margin: 0.5rem 0 1.5rem; color: var(--primary); font-weight: 800; font-size: 1.5rem;">Timeout / No Activity Detected</h2>
+                    <p style="color: #64748b; font-weight: 600; margin-bottom: 2rem;">Please try again / મહેરબાની કરીને ફરી પ્રયાસ કરો</p>
+                    <button class="btn" onclick="location.reload()"><span>Retry / ફરી પ્રયાસ કરો</span></button>
+                </div>
+            </div>
         </div>
     </div>
     <script>
-        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false, autoCaptureTimer = null;
+        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false, autoCaptureTimer = null, globalTimeoutTimer = null, faceImageData = null;
         const faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
         faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
         faceMesh.onResults(onFaceResults);
@@ -138,6 +147,13 @@
                 if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
                 if (autoStatus) autoStatus.style.display = 'none';
                 return; 
+            }
+
+            if (results.multiFaceLandmarks.length > 1) {
+                faceReady = false; wrap.className = "invalid"; instr.textContent = "Multiple Faces Detected! / એક જ ચહેરો રાખો"; btn.disabled = true;
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+                if (autoStatus) autoStatus.style.display = 'none';
+                return;
             }
             
             const lm = results.multiFaceLandmarks[0];
@@ -171,10 +187,19 @@
             const canvas = document.getElementById('palm-canvas'), ctx = canvas.getContext('2d'), autoStatus = document.getElementById('auto-capture-status');
             ctx.clearRect(0,0,canvas.width,canvas.height); 
             let detected = false;
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0 && results.multiHandedness[0].label === "Left") {
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 1) {
+                palmReady = false; wrap.className = "invalid"; instr.textContent = "Multiple Hands Detected! / એક જ હાથ રાખો"; autoStatus.style.display = 'none';
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+                btn.disabled = true;
+                return;
+            }
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length === 1 && results.multiHandedness[0].label === "Left") {
                 detected = true;
                 drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color:'#10b981', lineWidth:3});
             }
+            
             if (detected && !palmReady) {
                 palmReady = true; wrap.className = "valid"; instr.textContent = "Hold Still / સ્થિર રહો"; autoStatus.style.display = 'block';
                 if (!autoCaptureTimer) autoCaptureTimer = setTimeout(() => { if (palmReady) triggerPalmCapture(); }, 1500);
@@ -185,9 +210,25 @@
             btn.disabled = !palmReady;
         }
 
+        function startTimeout() {
+            clearGlobalTimeout();
+            globalTimeoutTimer = setTimeout(() => {
+                stopCamera();
+                showStage("TIMEOUT");
+            }, 30000); // 30 seconds
+        }
+
+        function clearGlobalTimeout() {
+            if (globalTimeoutTimer) {
+                clearTimeout(globalTimeoutTimer);
+                globalTimeoutTimer = null;
+            }
+        }
+
         async function startCamera(isPalm = false) {
             stopCamera(); const vid = document.getElementById(isPalm ? 'palm-video' : 'face-video');
             try {
+                startTimeout();
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1280, height: 720 } });
                 vid.srcObject = stream;
                 activeCamera = new Camera(vid, { onFrame: async () => { if(isPalm) await hands.send({image:vid}); else await faceMesh.send({image:vid}); } });
@@ -196,25 +237,43 @@
             } catch (e) { alert("Camera Error"); }
         }
 
-        function stopCamera() { if (activeCamera) { activeCamera.stop(); activeCamera = null; } if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } if(autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } }
-        function goBack() { stopCamera(); showStage("VERIFY"); }
+        function stopCamera() { 
+            if (activeCamera) { activeCamera.stop(); activeCamera = null; } 
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } 
+            if(autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } 
+            clearGlobalTimeout();
+        }
+        
+        function goBack() { 
+            stopCamera(); 
+            if (currentStage === "PALM" && currentMode === "BOTH") {
+                showStage("FACE"); startCamera(false);
+            } else {
+                showStage("VERIFY"); 
+            }
+        }
+        
         function showStage(s) {
             currentStage = s.toUpperCase();
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-            document.getElementById(`stage-${s.toLowerCase()}`).classList.add('active');
+            const stageEl = document.getElementById(`stage-${s.toLowerCase()}`);
+            if (stageEl) stageEl.classList.add('active');
             const cont = document.querySelector('.container');
-            if (s !== "VERIFY" && s !== "THANKS") cont.classList.add('wide'); else cont.classList.remove('wide');
+            if (s !== "VERIFY" && s !== "THANKS" && s !== "TIMEOUT") cont.classList.add('wide'); else cont.classList.remove('wide');
             updateProgress(); updateStageLabels();
         }
 
         function updateStageLabels() {
             const pb = document.getElementById('palm-back-btn');
-            if (pb) pb.style.display = (currentMode === "BOTH" ? "none" : "block");
+            // Back button should be visible in palm stage, even in BOTH mode
+            if (pb) pb.style.display = "block";
         }
 
         function updateProgress() {
             document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('active'));
             if (currentMode !== "BOTH") document.getElementById('dot-3').style.display = 'none';
+            else document.getElementById('dot-3').style.display = 'block';
+            
             if (currentStage === "VERIFY") document.getElementById('dot-1').classList.add('active');
             if (currentStage === "FACE") document.getElementById('dot-2').classList.add('active');
             if (currentStage === "PALM") document.getElementById(currentMode === "BOTH" ? 'dot-3' : 'dot-2').classList.add('active');
@@ -225,6 +284,7 @@
             const res = await fetch(`/api/employee/${code}`); const result = await res.json();
             if (result.success) {
                 employeeCode = result.data.EmployeeCode; employeeName = result.data.Name;
+                faceImageData = null; // Reset stored face data
                 if (currentMode === "PALM") { document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
                 else { document.getElementById('face-user-name').textContent = employeeName; showStage("FACE"); startCamera(false); }
             } else alert("Invalid Code");
@@ -234,7 +294,19 @@
             const vid = document.getElementById('palm-video'), can = document.createElement('canvas');
             can.width = vid.videoWidth; can.height = vid.videoHeight;
             const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
-            const res = await fetch('/api/palm/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg',0.85)}) });
+            const palmData = can.toDataURL('image/jpeg', 0.85);
+
+            // If BOTH mode, upload face first if we haven't already (atomic-like behavior)
+            if (currentMode === "BOTH" && faceImageData) {
+                const fRes = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:faceImageData}) });
+                const fResult = await fRes.json();
+                if (!fResult.success) {
+                    alert("Face upload failed: " + fResult.message);
+                    return;
+                }
+            }
+
+            const res = await fetch('/api/palm/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:palmData}) });
             if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
         }
 
@@ -243,10 +315,17 @@
             const vid = document.getElementById('face-video'), can = document.createElement('canvas');
             can.width = vid.videoWidth; can.height = vid.videoHeight;
             const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
-            const res = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg', 0.9)}) });
-            if ((await res.json()).success) {
-                if (currentMode === "BOTH") { stopCamera(); document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
-                else { stopCamera(); showStage("THANKS"); }
+            const faceData = can.toDataURL('image/jpeg', 0.9);
+
+            if (currentMode === "BOTH") {
+                faceImageData = faceData; // Store face in memory, don't upload yet
+                stopCamera(); 
+                document.getElementById('palm-user-name').textContent = employeeName; 
+                showStage("PALM"); 
+                startCamera(true);
+            } else {
+                const res = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:faceData}) });
+                if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
             }
         }
 
