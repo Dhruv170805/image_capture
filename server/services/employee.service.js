@@ -55,20 +55,20 @@ async function generateTemplate() {
 
   // 1. Template Sheet
   const templateData = [
-    ["Employee_Code", "EMPALIAS_Code", "Employee_Name", "Dept"],
-    ["1001", "PE001", "John Doe", "Production"],
-    ["", "PE002", "Jane Smith", "Quality"],
-    ["1003", "", "Bob Wilson", "Sales"]
+    ["Employee_Code", "EMPALIAS_Code", "Employee_Name"],
+    ["1001", "PE001", "John Doe"],
+    ["", "PE002", "Jane Smith"],
+    ["1003", "", "Bob Wilson"]
   ];
   const wsTemplate = XLSX.utils.aoa_to_sheet(templateData);
-  wsTemplate["!cols"] = [{ wch: 15 }, { wch: 18 }, { wch: 30 }, { wch: 20 }];
+  wsTemplate["!cols"] = [{ wch: 15 }, { wch: 18 }, { wch: 30 }];
   XLSX.utils.book_append_sheet(workbook, wsTemplate, "Employee_Data");
 
   // 2. Instructions Sheet
   const guideData = [
     ["UPLOAD INSTRUCTIONS"],
     ["1. At least ONE of 'Employee_Code' or 'EMPALIAS_Code' must be filled for each row."],
-    ["2. 'Employee_Name' and 'Dept' are MANDATORY for all employees."],
+    ["2. 'Employee_Name' is MANDATORY for all employees."],
     ["3. Codes and Alias Codes must be unique across the system."],
     ["4. Use only plain text. No special formatting."],
     ["5. Delete sample rows before uploading your real data."]
@@ -110,10 +110,6 @@ async function uploadExcelEmployees(buffer) {
       }
       if (!name) {
         errors.push({ row: rowNum, error: "Employee_Name is required" });
-        continue;
-      }
-      if (!dept) {
-        errors.push({ row: rowNum, error: "Department (Dept) is required" });
         continue;
       }
 

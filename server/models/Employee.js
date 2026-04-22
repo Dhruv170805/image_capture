@@ -18,7 +18,7 @@ const EmployeeSchema = new mongoose.Schema({
     trim: true
   },
   Name: { type: String, required: true, trim: true },
-  Department: { type: String, required: true, trim: true },
+  Department: { type: String, trim: true },
   IsActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
