@@ -15,16 +15,18 @@ function getISTDate() {
 }
 
 /**
- * Formats date for filename: DD-MM-YYYY_HH-mm-ss
+ * Formats date for filename: DD-MM-YYYY_HH-mm-ss in IST
  */
 function formatISTForFilename(date) {
+  // Create a date object shifted to IST for extraction
+  const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
   const pad = (n) => n.toString().padStart(2, "0");
-  return `${pad(date.getUTCDate())}-${pad(date.getUTCMonth() + 1)}-${date.getUTCFullYear()}_${pad(date.getUTCHours())}-${pad(date.getUTCMinutes())}-${pad(date.getUTCSeconds())}`;
+  
+  return `${pad(istDate.getUTCDate())}-${pad(istDate.getUTCMonth() + 1)}-${istDate.getUTCFullYear()}_${pad(istDate.getUTCHours())}-${pad(istDate.getUTCMinutes())}-${pad(istDate.getUTCSeconds())}`;
 }
 
 async function insertLog(entry) {
   try {
-    const istNow = getISTDate();
     const safeCode = entry.EmployeeCode.toString().replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 
     // Remove all previous records for this employee to ensure only the latest one stays
@@ -38,7 +40,7 @@ async function insertLog(entry) {
       FileName: `${safeCode}.jpg`,
       FileSizeBytes: entry.FileSizeBytes,
       ImageData: entry.ImageData,
-      CapturedAt: istNow,
+      CapturedAt: new Date(), // Store in standard UTC
     });
 
     return await newLog.save();
