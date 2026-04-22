@@ -370,16 +370,36 @@
             const canvas = document.getElementById('palm-canvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
             let handDetected = false;
+            let isRightHand = false;
             palmGuide.classList.add('active');
+
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-                drawLandmarks(ctx, results.multiHandLandmarks[0], {color: '#FFFFFF', lineWidth: 1, radius: 2});
-                handDetected = true;
+                // MediaPipe 'Right' label corresponds to the physically right hand
+                const handedness = results.multiHandedness[0];
+                
+                if (handedness.label === "Right") {
+                    isRightHand = true;
+                    drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                    drawLandmarks(ctx, results.multiHandLandmarks[0], {color: '#FFFFFF', lineWidth: 1, radius: 2});
+                    handDetected = true;
+                } else {
+                    // WRONG HAND shown
+                    autoStatus.textContent = "WRONG HAND! PLEASE USE RIGHT HAND";
+                    autoStatus.style.background = "var(--invalid)";
+                    autoStatus.style.display = "block";
+                    palmGuide.classList.remove('valid');
+                    palmReady = false;
+                    if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+                }
             }
-            if (handDetected && !palmReady) {
+
+            if (isRightHand && handDetected && !palmReady) {
                 palmReady = true;
                 palmGuide.classList.add('valid');
+                autoStatus.textContent = "STABILIZING...";
+                autoStatus.style.background = "var(--success)";
                 autoStatus.style.display = 'block';
                 if (!autoCaptureTimer) autoCaptureTimer = setTimeout(() => { if (palmReady) triggerPalmCapture(); }, 1500);
             } else if (!handDetected && palmReady) {
