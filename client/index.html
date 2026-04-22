@@ -285,9 +285,9 @@
                 console.log('⚙️ System Policy Updated:', data.mode);
                 showLiveToast("System Policy Updated to " + data.mode);
                 currentMode = data.mode;
-                if (currentStage === "VERIFY") {
-                    updateProgress();
-                }
+                updateProgress();
+                // If we are currently on a capture stage, refresh the labels
+                updateStageLabels();
             });
             socket.on('disconnect', () => console.warn('🔌 Disconnected from Server'));
         }
@@ -301,18 +301,53 @@
                     console.log('✅ Current Mode:', currentMode);
                 }
                 updateProgress();
+                updateStageLabels();
             } catch (err) {
                 console.error('Failed to load initial config', err);
             }
         }
 
+        function updateStageLabels() {
+            const faceLabel = document.getElementById('face-stage-label');
+            const palmLabel = document.getElementById('palm-stage-label');
+            const palmBackBtn = document.getElementById('palm-back-btn');
+
+            if (currentMode === "BOTH") {
+                if (faceLabel) faceLabel.textContent = "Stage 1: Face Identity";
+                if (palmLabel) palmLabel.textContent = "Stage 2: Palm Biometric";
+                if (palmBackBtn) palmBackBtn.style.display = "none"; // In BOTH mode, they must proceed from Face to Palm
+            } else if (currentMode === "FACE") {
+                if (faceLabel) faceLabel.textContent = "Stage 1: Face Identity";
+                // Palm stage wouldn't normally be reached, but let's be safe
+                if (palmLabel) palmLabel.textContent = "Stage 1: Palm Biometric";
+                if (palmBackBtn) palmBackBtn.style.display = "block";
+            } else if (currentMode === "PALM") {
+                if (palmLabel) palmLabel.textContent = "Stage 1: Palm Biometric";
+                if (palmBackBtn) palmBackBtn.style.display = "block";
+            }
+        }
+
         function updateProgress() {
-            document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.progress-dot').forEach(d => {
+                d.classList.remove('active');
+                d.style.display = 'block';
+            });
+            
+            // Hide dot-3 if not in BOTH mode
+            if (currentMode !== "BOTH") {
+                document.getElementById('dot-3').style.display = 'none';
+            }
+
             if (currentStage === "VERIFY") document.getElementById('dot-1').classList.add('active');
-            if (currentStage === "FACE") document.getElementById('dot-2').classList.add('active');
+            
+            if (currentStage === "FACE") {
+                document.getElementById('dot-2').classList.add('active');
+            }
+            
             if (currentStage === "PALM") {
                 const dot = currentMode === "BOTH" ? document.getElementById('dot-3') : document.getElementById('dot-2');
-                dot.classList.add('active');
+                const dotEl = document.getElementById(dot === document.getElementById('dot-3') ? 'dot-3' : 'dot-2');
+                if (dotEl) dotEl.classList.add('active');
             }
         }
 
@@ -325,7 +360,9 @@
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             const target = document.getElementById(`stage-${stage.toLowerCase()}`);
             if (target) target.classList.add('active');
+            
             updateProgress();
+            updateStageLabels();
         }
 
         function goBack() {
