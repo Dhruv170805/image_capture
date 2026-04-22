@@ -55,7 +55,7 @@ async function generateTemplate() {
 
   // 1. Template Sheet
   const templateData = [
-    ["Code", "EMPALIAS Code", "Name", "Dept"],
+    ["Employee_Code", "EMPALIAS_Code", "Employee_Name", "Dept"],
     ["1001", "PE001", "John Doe", "Production"],
     ["", "PE002", "Jane Smith", "Quality"],
     ["1003", "", "Bob Wilson", "Sales"]
@@ -67,8 +67,8 @@ async function generateTemplate() {
   // 2. Instructions Sheet
   const guideData = [
     ["UPLOAD INSTRUCTIONS"],
-    ["1. At least ONE of 'Code' or 'EMPALIAS Code' must be filled for each row."],
-    ["2. 'Name' and 'Dept' are MANDATORY for all employees."],
+    ["1. At least ONE of 'Employee_Code' or 'EMPALIAS_Code' must be filled for each row."],
+    ["2. 'Employee_Name' and 'Dept' are MANDATORY for all employees."],
     ["3. Codes and Alias Codes must be unique across the system."],
     ["4. Use only plain text. No special formatting."],
     ["5. Delete sample rows before uploading your real data."]
@@ -98,18 +98,18 @@ async function uploadExcelEmployees(buffer) {
       const row = rows[i];
       const rowNum = i + 2; // +1 for 0-index, +1 for header row
 
-      const code = (row.Code || "").toString().trim().toUpperCase();
-      const alias = (row["EMPALIAS Code"] || row.AliasCode || "").toString().trim().toUpperCase();
-      const name = (row.Name || "").toString().trim();
+      const code = (row.Employee_Code || row.Code || "").toString().trim().toUpperCase();
+      const alias = (row.EMPALIAS_Code || row["EMPALIAS Code"] || "").toString().trim().toUpperCase();
+      const name = (row.Employee_Name || row.Name || "").toString().trim();
       const dept = (row.Dept || "").toString().trim();
 
       // Validation Rules
       if (!code && !alias) {
-        errors.push({ row: rowNum, error: "Missing both Code and EMPALIAS Code (At least one required)" });
+        errors.push({ row: rowNum, error: "Missing both Employee_Code and EMPALIAS_Code (At least one required)" });
         continue;
       }
       if (!name) {
-        errors.push({ row: rowNum, error: "Name is required" });
+        errors.push({ row: rowNum, error: "Employee_Name is required" });
         continue;
       }
       if (!dept) {
@@ -119,11 +119,11 @@ async function uploadExcelEmployees(buffer) {
 
       // Check duplicate in same file
       if (code && seenCodesInFile.has(code)) {
-        errors.push({ row: rowNum, error: `Duplicate Code in file: ${code}` });
+        errors.push({ row: rowNum, error: `Duplicate Employee_Code in file: ${code}` });
         continue;
       }
       if (alias && seenAliasInFile.has(alias)) {
-        errors.push({ row: rowNum, error: `Duplicate EMPALIAS Code in file: ${alias}` });
+        errors.push({ row: rowNum, error: `Duplicate EMPALIAS_Code in file: ${alias}` });
         continue;
       }
 
