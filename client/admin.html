@@ -132,13 +132,25 @@
             .main-content { grid-template-columns: 1fr; }
             .right-col { order: -1; }
         }
+        @media (max-width: 480px) {
+            .navbar { padding: 0.8rem 1rem; }
+            .nav-left span { font-size: 0.9rem !important; }
+            .nav-center { font-size: 0.9rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
 <nav class="navbar">
-    <div class="nav-left"><img src="logo.png" alt="Logo"></div>
-    <div class="nav-center">Registration For NG P&P</div>
+    <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
+        <img src="logo.png" alt="Logo">
+        <div style="display: flex; flex-direction: column; line-height: 1; text-align: left;">
+            <span style="font-weight: 900; color: var(--primary); font-size: 1rem; letter-spacing: 0.5px; text-transform: uppercase;">Print</span>
+            <span style="font-weight: 800; color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Electronics</span>
+        </div>
+    </div>
+    <div class="nav-center">Enrollment 4 NG P&P</div>
     <div class="nav-right">
         <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">Back to Capture</a>
     </div>

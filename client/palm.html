@@ -137,13 +137,27 @@
         .check-icon::after { content: ''; position: absolute; width: 3px; height: 25px; background-color: var(--success); left: 21px; top: 38px; transform: rotate(-45deg); animation: icon-line-tip 0.75s; }
         @keyframes icon-line-tip { 0% { width: 0; left: 1px; top: 19px; } 100% { width: 3px; left: 21px; top: 38px; } }
         @keyframes icon-line-long { 0% { width: 0; right: 46px; top: 54px; } 100% { width: 3px; left: 48px; top: 18px; } }
+        @media (max-width: 480px) {
+            .card { padding: 1rem; border-radius: 0; height: 100%; max-width: 100%; border: none; }
+            .container { padding: 0; }
+            input { font-size: 1.4rem; }
+            .name-card p { font-size: 1.2rem; }
+            .nav-left span { font-size: 0.9rem !important; }
+            .nav-center { font-size: 1rem; }
+        }
     </style>
 </head>
 <body>
 
 <nav class="navbar">
-    <div class="nav-left"><img src="logo.png" alt="Logo"></div>
-    <div class="nav-center">Palm Registration</div>
+    <div class="nav-left" style="display: flex; align-items: center; gap: 10px;">
+        <img src="logo.png" alt="Logo">
+        <div style="display: flex; flex-direction: column; line-height: 1; text-align: left;">
+            <span style="font-weight: 900; color: var(--primary); font-size: 1rem; letter-spacing: 0.5px; text-transform: uppercase;">Print</span>
+            <span style="font-weight: 800; color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Electronics</span>
+        </div>
+    </div>
+    <div class="nav-center">Enrollment 4 NG P&P</div>
     <div class="nav-right">
         <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">Back to Face</a>
     </div>
@@ -154,17 +168,14 @@
         
         <!-- VERIFY -->
         <div id="stage-verify" class="step active">
-            <h1 style="margin:0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Identity Verification</h1>
-            <h2 style="margin: 0.5rem 0 2rem; color: #64748b; font-weight: 700; font-size: 1.4rem;">એમ્પ્લોયી વેરીફીકેશન</h2>
+            <h1 style="margin: 1.5rem 0; color: var(--primary); font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">કર્મચારી કોડ / EMPLOYEE CODE</h1>
             
-            <div style="text-align: left;">
-                <label style="font-weight: 800; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-left: 5px;">કર્મચારી કોડ / Employee Code</label>
+            <div style="text-align: left; flex: 1; display: flex; flex-direction: column; justify-content: center;">
                 <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
+                <button class="btn" id="start-btn" onclick="startModule()">
+                    <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.8em; font-weight: 500;">CONTINUE REGISTRATION</small></span>
+                </button>
             </div>
-
-            <button class="btn" id="start-btn" onclick="startModule()">
-                <span>નોંધણી ચાલુ રાખો <br><small style="font-size:0.8em; font-weight: 500;">CONTINUE REGISTRATION</small></span>
-            </button>
         </div>
 
         <!-- CAPTURE -->
