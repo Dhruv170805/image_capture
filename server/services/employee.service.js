@@ -42,24 +42,28 @@ async function getEmployee(code) {
 
 async function bulkUploadEmployees(employees) {
   try {
-    // 1. Validate the data first
-    const validEmployees = employees.filter(emp => emp.EmployeeCode && emp.Name && emp.Department);
+    // 1. Normalize and validate the data
+    const validEmployees = employees.map(emp => {
+      // Handle flexible header names
+      const EmployeeCode = (emp.EmployeeCode || emp.empcode || emp.Code || "").toString().trim();
+      const Name = (emp.Name || emp.name || emp.fullname || "").toString().trim();
+      const Department = (emp.Department || emp.desc || emp.department || emp.DepartmentName || "").toString().trim();
+
+      return { EmployeeCode, Name, Department };
+    }).filter(emp => emp.EmployeeCode && emp.Name && emp.Department);
     
     if (validEmployees.length === 0) {
-      return { success: false, message: "No valid employee data found in CSV." };
+      return { success: false, message: "No valid employee data found in CSV. Expected headers: EmployeeCode, Name, Department (or empcode, name, desc)." };
     }
 
-    // 2. Clear existing employees (if that's the desired behavior for a "new list")
-    // Or we could use upsert. Given the request "if registration is from other list", 
-    // it implies replacing or extending. We'll go with upsert to be safe.
-    
+    // 2. Upsert employees
     const operations = validEmployees.map(emp => ({
       updateOne: {
-        filter: { EmployeeCode: emp.EmployeeCode.trim().toUpperCase() },
+        filter: { EmployeeCode: emp.EmployeeCode.toUpperCase() },
         update: { 
           $set: { 
-            Name: emp.Name.trim(), 
-            Department: emp.Department.trim(),
+            Name: emp.Name, 
+            Department: emp.Department,
             IsActive: true 
           } 
         },

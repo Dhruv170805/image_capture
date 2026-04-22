@@ -7,9 +7,66 @@ const mongoose = require("mongoose");
 const { streamImagesToZip, MAX_DOWNLOAD_LIMIT } = require("../services/download.service");
 const ImageLog = require("../models/ImageLog");
 const Employee = require("../models/Employee");
+const XLSX = require("xlsx");
+
+// GET /api/download/registered-excel
+async function downloadRegisteredExcel(req, res) {
+  try {
+    const logs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
+
+    const data = logs.map(log => ({
+      "Employee Code": log.EmployeeCode,
+      "Employee Name": log.EmployeeName,
+      "Department": log.Department,
+      "Captured At (IST)": new Date(log.CapturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Registered");
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.attachment("registered_employees.xlsx");
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+// GET /api/download/not-registered-excel
+async function downloadNotRegisteredExcel(req, res) {
+  try {
+    const registeredCodes = await ImageLog.find({}).distinct("EmployeeCode");
+    const missing = await Employee.find({ 
+      EmployeeCode: { $nin: registeredCodes },
+      IsActive: true 
+    }).sort({ EmployeeCode: 1 });
+
+    const data = missing.map(emp => ({
+      "Employee Code": emp.EmployeeCode,
+      "Employee Name": emp.Name,
+      "Department": emp.Department
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Missing");
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.attachment("missing_registration_list.xlsx");
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
 
 // GET /api/download/registered-csv
 async function downloadRegisteredCSV(req, res) {
+...
   try {
     const logs = await ImageLog.find({}).sort({ CapturedAt: -1 }).select("-ImageData");
     let csv = "EmployeeCode,EmployeeName,Department,CapturedAt_IST\n";
@@ -131,5 +188,7 @@ module.exports = {
   downloadByEmployee, 
   downloadByDate, 
   downloadRegisteredCSV, 
-  downloadNotRegisteredCSV 
+  downloadNotRegisteredCSV,
+  downloadRegisteredExcel,
+  downloadNotRegisteredExcel
 };

@@ -31,6 +31,9 @@ async function uploadImage(req, res) {
     const processed = await processImage(inputBuffer);
     const { archive } = generateFileNames(empCode);
 
+    // DELETE EXISTING REGISTRATIONS for this employee to prevent duplicates
+    await ImageLog.deleteMany({ EmployeeCode: empResult.data.EmployeeCode });
+
     const logEntry = await insertLog({
       EmployeeCode: empResult.data.EmployeeCode,
       EmployeeName: empResult.data.Name,
@@ -124,7 +127,9 @@ async function downloadAll(req, res) {
 async function getStats(req, res) {
   try {
     const totalEmployees = await Employee.countDocuments({ IsActive: true });
-    const totalRegistered = await ImageLog.countDocuments({});
+    // Use distinct count in case cleanup hasn't run yet or for absolute accuracy
+    const registeredCodes = await ImageLog.distinct("EmployeeCode");
+    const totalRegistered = registeredCodes.length;
     const remaining = Math.max(0, totalEmployees - totalRegistered);
 
     return res.status(200).json({ 
