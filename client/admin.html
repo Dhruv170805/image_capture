@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image download | Admin</title>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { --primary: #003366; --bg: #f4f7f9; --text: #333; }
         html, body { height: 100%; margin: 0; overflow: hidden; }
@@ -152,7 +153,17 @@
         <h1>⚙️ Admin Dashboard</h1>
 
         <div class="card">
-            <h3>1. Registration Settings</h3>
+            <h3>1. Update Employee List (CSV)</h3>
+            <p style="font-size: 0.75rem; color: #666; margin-top: 0;">Upload CSV with: <b>EmployeeCode, Name, Department</b></p>
+            <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.8rem; margin-bottom: 10px;">
+            <button id="upload-csv-btn" class="btn" style="width: 100%; background: #2e7d32;">
+                <span class="loader" id="loader-csv"></span>
+                Upload New List
+            </button>
+        </div>
+
+        <div class="card">
+            <h3>2. Registration Settings</h3>
             <div class="input-group">
                 <label>Active Registration Mode</label>
                 <select id="config-mode" style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #ccc; font-weight: bold;">
@@ -168,7 +179,14 @@
         </div>
 
         <div class="card">
-            <h3>2. Reports (Excel/CSV)</h3>
+            <h3>3. Full Backup</h3>
+            <a href="/api/upload/download-all" class="btn" style="width: 100%; justify-content: center; text-decoration: none; box-sizing: border-box; background: #444;">
+                Download ALL ZIP
+            </a>
+        </div>
+
+        <div class="card">
+            <h3>4. Reports (Excel/CSV)</h3>
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <a href="/api/download/registered-excel" class="btn" style="text-decoration: none; justify-content: center;">
                     Download Registered List (Excel)
@@ -182,19 +200,9 @@
                 </div>
             </div>
         </div>
-        
-        <div class="card">
-            <h3>3. Update Employee List (CSV)</h3>
-            <p style="font-size: 0.75rem; color: #666; margin-top: 0;">Upload CSV with: <b>EmployeeCode, Name, Department</b></p>
-            <input type="file" id="csv-file-input" accept=".csv" style="font-size: 0.8rem; margin-bottom: 10px;">
-            <button id="upload-csv-btn" class="btn" style="width: 100%; background: #2e7d32;">
-                <span class="loader" id="loader-csv"></span>
-                Upload New List
-            </button>
-        </div>
 
         <div class="card">
-            <h3>4. Filtered ZIP</h3>
+            <h3>5. Filtered ZIP</h3>
             <div class="input-group">
                 <label>Start Date</label>
                 <input type="date" id="date-start">
@@ -210,7 +218,7 @@
         </div>
 
         <div class="card">
-            <h3>5. Download By Employee</h3>
+            <h3>6. Download By Employee</h3>
             <div class="input-group">
                 <label>Employee Code</label>
                 <input type="text" id="emp-code-input" placeholder="Ex: 1234">
@@ -219,13 +227,6 @@
                 <span class="loader" id="loader-emp"></span>
                 Download Images
             </button>
-        </div>
-
-        <div class="card">
-            <h3>6. Full Backup</h3>
-            <a href="/api/upload/download-all" class="btn" style="width: 100%; justify-content: center; text-decoration: none; box-sizing: border-box; background: #444;">
-                Download ALL ZIP
-            </a>
         </div>
 
         <div id="status-msg"></div>
@@ -273,6 +274,24 @@
     async function init() {
         await loadStats();
         await loadConfig();
+        loadLogsBtn.click(); // Initial load of logs
+        
+        // WebSocket Real-time updates
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.on('registration_updated', async (data) => {
+                console.log("New registration detected via socket:", data);
+                await loadStats();
+                // Refresh logs list silently
+                const res = await fetch('/api/upload/logs?limit=100');
+                const result = await res.json();
+                if (result.success) {
+                    loadedLogs = result.data;
+                    renderTable();
+                }
+            });
+            socket.on('connect', () => console.log("Connected to WebSocket server"));
+        }
     }
 
     init();

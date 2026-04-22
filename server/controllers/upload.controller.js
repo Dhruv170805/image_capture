@@ -43,6 +43,12 @@ async function uploadImage(req, res) {
       FileSizeBytes: processed.length,
     });
 
+    // Notify clients via WebSocket
+    try {
+      const io = require("../utils/socket").getIO();
+      io.emit("registration_updated", { type: "FACE", employeeCode: empResult.data.EmployeeCode });
+    } catch (sErr) { console.error("Socket error", sErr); }
+
     return res.status(200).json({
       success: true,
       message: "Image captured and saved to database successfully.",

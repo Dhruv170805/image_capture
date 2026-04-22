@@ -34,6 +34,12 @@ async function registerPalm(req, res) {
 
     await newPalm.save();
 
+    // Notify clients via WebSocket
+    try {
+      const io = require("../utils/socket").getIO();
+      io.emit("registration_updated", { type: "PALM", employeeCode: employee.EmployeeCode });
+    } catch (sErr) { console.error("Socket error", sErr); }
+
     return res.status(200).json({
       success: true,
       message: "Right palm registered successfully.",

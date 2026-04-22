@@ -27,6 +27,12 @@ async function updateRegistrationMode(req, res) {
       { upsert: true, new: true }
     );
 
+    // Notify clients via WebSocket
+    try {
+      const io = require("../utils/socket").getIO();
+      io.emit("config_updated", { mode: modeConfig.value });
+    } catch (sErr) { console.error("Socket error", sErr); }
+
     return res.status(200).json({ success: true, mode: modeConfig.value });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

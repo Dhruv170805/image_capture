@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Registration System</title>
+    <!-- Socket.IO Client -->
+    <script src="/socket.io/socket.io.js"></script>
     <!-- MediaPipe Hands (Needed for palm step) -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -146,18 +148,34 @@
         let employeeCode = "";
         let employeeName = "";
         let stream = null;
+        let activeCamera = null; // Track the MediaPipe Camera instance
 
         // MediaPipe setup
         const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
         hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.5 });
+async function init() {
+    const res = await fetch('/api/config/registration-mode');
+    const data = await res.json();
+    if (data.success) {
+        currentMode = data.mode;
+    }
+    updateProgress();
 
-        async function init() {
-            const res = await fetch('/api/config/registration-mode');
-            const data = await res.json();
-            if (data.success) currentMode = data.mode;
-            updateProgress();
-        }
+    // WebSocket for live config updates
+    if (typeof io !== 'undefined') {
+        const socket = io();
+        socket.on('config_updated', (data) => {
+            console.log("Registration mode updated via socket:", data.mode);
+            // Only update if we haven't started capturing yet
+            if (currentStage === "VERIFY") {
+                currentMode = data.mode;
+                updateProgress();
+            }
+        });
+    }
+}
 
+init();
         function updateProgress() {
             document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('active'));
             if (currentStage === "VERIFY") document.getElementById('dot-1').classList.add('active');
@@ -343,15 +361,22 @@
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
                 };
-                const camera = new Camera(video, {
+                activeCamera = new Camera(video, {
                     onFrame: async () => { await hands.send({ image: video }); }
                 });
-                camera.start();
+                await activeCamera.start();
             }
         }
 
         function stopCamera() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
+            if (activeCamera) {
+                activeCamera.stop();
+                activeCamera = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null;
+            }
         }
 
         init();
