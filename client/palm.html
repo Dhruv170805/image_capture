@@ -9,141 +9,187 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <style>
-        :root { --primary: #003366; --invalid: #ff4444; --valid: #00c851; --warning: #ffbb33; }
-        body { font-family: -apple-system, sans-serif; margin: 0; background: #000; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { 
+            --primary: #003366; 
+            --accent: #3b82f6; 
+            --bg-gradient: radial-gradient(at 0% 0%, hsla(210,100%,96%,1) 0, transparent 50%), 
+                           radial-gradient(at 50% 0%, hsla(225,100%,94%,1) 0, transparent 50%), 
+                           radial-gradient(at 100% 0%, hsla(190,100%,92%,1) 0, transparent 50%);
+            --glass: rgba(255, 255, 255, 0.85);
+            --success: #10b981; 
+            --invalid: #ef4444; 
+        }
         
-        .header { background: white; color: var(--primary); padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .header img { height: 35px; }
-
-        .camera-container { position: relative; flex: 1; display: flex; justify-content: center; align-items: center; background: #111; overflow: hidden; }
-        video { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
-
-        /* Palm Guide Silhouette Overlay */
-        .guide-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 320px;
-            height: 440px;
-            border: 3px dashed var(--invalid);
-            border-radius: 30px;
-            pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; 
+            background-color: #f8fafc;
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: #1e293b; 
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(255,255,255,0.05);
-            z-index: 10;
-        }
-        .guide-overlay.valid { border-color: var(--valid); border-style: solid; background: rgba(0,200,81,0.15); box-shadow: 0 0 30px rgba(0,200,81,0.3); }
-        .guide-overlay.detected { border-color: var(--warning); }
-
-        /* Professional Hand Silhouette SVG */
-        .hand-svg {
-            width: 280px;
-            height: 380px;
-            fill: rgba(255,255,255,0.05);
-            stroke: rgba(255,255,255,0.6);
-            stroke-width: 2;
-            transition: all 0.3s;
-            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-        }
-        .valid .hand-svg { 
-            stroke: var(--valid); 
-            stroke-width: 4; 
-            fill: rgba(0,200,81,0.1);
-            filter: drop-shadow(0 0 20px rgba(0,200,81,0.4));
         }
 
-        .controls { position: absolute; bottom: 2rem; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; z-index: 20; }
-        .instruction { background: rgba(0,0,0,0.85); padding: 1rem 2.5rem; border-radius: 50px; font-weight: 900; font-size: 1.6rem; border: 3px solid rgba(255,255,255,0.4); color: white; text-transform: uppercase; letter-spacing: 1.5px; text-align: center; max-width: 90%; }
+        .navbar { 
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            position: sticky; top: 0; z-index: 100; 
+        }
+        .navbar img { height: 45px; }
+        .nav-center { font-size: 1.4rem; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; }
+
+        .container { max-width: 600px; margin: 2rem auto; padding: 0 1rem; transition: all 0.5s ease; width: 100%; box-sizing: border-box; }
+        .container.wide { max-width: 900px; }
         
+        .card { 
+            background: var(--glass); 
+            backdrop-filter: blur(12px);
+            padding: 2.5rem 2rem; 
+            border-radius: 32px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06); 
+            border: 1px solid rgba(255,255,255,0.5);
+            text-align: center; 
+        }
+        
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 1.2rem 2rem; 
+            border-radius: 16px; 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; justify-content: center; align-items: center; gap: 12px;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+            text-transform: uppercase;
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0, 51, 102, 0.2); }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+        input { width: 100%; padding: 1.2rem; margin: 1rem 0 2rem; border: 3px solid #e2e8f0; border-radius: 16px; font-size: 1.8rem; text-align: center; font-weight: 900; box-sizing: border-box; color: var(--primary); transition: border-color 0.2s; }
+        input:focus { border-color: var(--accent); outline: none; background: white; }
+
+        #camera-wrap { 
+            position: relative; 
+            border-radius: 24px; 
+            overflow: hidden; 
+            background: #000; 
+            margin-bottom: 2rem; 
+            border: 4px solid var(--accent);
+            aspect-ratio: 4/3;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); pointer-events: none; }
+
+        .instruction { 
+            background: rgba(0,0,0,0.85); padding: 1rem 2rem; border-radius: 50px; 
+            font-weight: 900; font-size: 1.4rem; border: 3px solid rgba(255,255,255,0.4); 
+            color: white; text-transform: uppercase; letter-spacing: 1.5px; text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .guide-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 280px; height: 380px; border: 3px dashed rgba(255,255,255,0.3);
+            border-radius: 30px; pointer-events: none; transition: all 0.3s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.05); z-index: 10;
+        }
+        .guide-overlay.valid { border-color: var(--success); border-style: solid; background: rgba(16, 185, 129, 0.15); box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
+
+        .hand-svg { width: 180px; height: 250px; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.5); stroke-width: 2; transition: all 0.3s; }
+        .valid .hand-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.2); }
+
         .btn-capture {
             width: 100px; height: 100px; border-radius: 50%; border: 8px solid white;
             background: rgba(255,255,255,0.2); cursor: pointer; display: flex; justify-content: center; align-items: center;
-            transition: all 0.3s;
+            transition: all 0.3s; margin: 0 auto;
         }
-        .btn-capture:disabled { opacity: 0.2; cursor: not-allowed; transform: scale(0.9); }
-        .btn-capture.ready { background: var(--valid); border-color: white; transform: scale(1.1); box-shadow: 0 0 30px var(--valid); }
-
-        .btn-back {
-            position: absolute; top: 1.5rem; left: 1.5rem; background: rgba(255,255,255,0.9);
-            color: var(--primary); border: none; padding: 0.8rem 1.5rem; border-radius: 12px;
-            font-weight: 800; font-size: 1.1rem; cursor: pointer; z-index: 100;
-            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        #emp-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 1000; display: flex;
-            justify-content: center; align-items: center;
-        }
-        .modal-content { background: white; color: black; padding: 3rem 2.5rem; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        input { width: 100%; padding: 1.2rem; margin: 1.5rem 0; border: 3px solid #eee; border-radius: 15px; font-size: 1.8rem; text-align: center; font-weight: 900; box-sizing: border-box; color: var(--primary); }
-        input:focus { border-color: var(--primary); outline: none; }
-        .btn { background: var(--primary); color: white; border: none; padding: 1.2rem; border-radius: 15px; width: 100%; font-weight: 900; font-size: 1.4rem; cursor: pointer; transition: background 0.2s; text-transform: uppercase; }
-        .btn:hover { background: #002244; }
-
-        #emp-name-display {
-            position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(0, 51, 102, 0.85);
-            color: white; padding: 0.8rem 1.5rem; border-radius: 12px;
-            font-weight: 800; font-size: 1.2rem; border: 2px solid rgba(255,255,255,0.3);
-            display: none; z-index: 100;
-        }
+        .btn-capture.ready { background: var(--success); border-color: white; transform: scale(1.1); box-shadow: 0 0 30px var(--success); }
 
         #status-toast {
             position: fixed; top: 2rem; left: 50%; transform: translateX(-50%);
-            padding: 1rem 2rem; border-radius: 12px; z-index: 2000;
-            display: none; font-weight: 800; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            padding: 1.2rem 2.5rem; border-radius: 20px; z-index: 2000;
+            display: none; font-weight: 800; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
     </style>
 </head>
 <body>
 
-<div id="emp-modal">
-    <div class="modal-content">
-        <img src="logo.png" alt="Logo" style="height: 60px; margin-bottom: 1.5rem;">
-        <h1 style="margin:0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Palm Registration</h1>
-        <p style="color: #666; margin-top: 10px; font-weight: 700; font-size: 1.2rem;">Enter Employee Code to start</p>
-        <input type="text" id="emp-code" placeholder="EX: 1234" autofocus>
-        <button class="btn" id="start-camera-btn" onclick="startModule()">OPEN CAMERA</button>
-        <a href="index.html" style="display:block; text-align:center; margin-top:2rem; color: #888; text-decoration: none; font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Back to Face Capture</a>
-    </div>
-</div>
-
-<div id="emp-name-display"></div>
-<button class="btn-back" id="global-back-btn" style="display:none;" onclick="resetToModal()">
-    <span>⬅️</span> WRONG PERSON / BACK
-</button>
-
-<nav class="header">
-    <div style="flex: 1;"><img src="logo.png" alt="Logo"></div>
-    <div style="flex: 2; text-align: center; color: var(--primary); font-weight: 900; font-size: 1.5rem; letter-spacing: 1px;">RIGHT PALM CAPTURE</div>
-    <div style="flex: 1; display: flex; justify-content: flex-end; gap: 20px;">
-        <a href="index.html" style="color: #666; text-decoration: none; font-weight: 800; font-size: 1rem;">FACE</a>
-        <a href="palm.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 1rem; border-bottom: 3px solid var(--primary);">PALM</a>
+<nav class="navbar">
+    <div class="nav-left"><img src="logo.png" alt="Logo"></div>
+    <div class="nav-center">Palm Registration</div>
+    <div class="nav-right">
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-weight: 800; font-size: 0.9rem;">BACK TO FACE</a>
     </div>
 </nav>
 
-<div class="camera-container">
-    <video id="input_video" playsinline></video>
-    <canvas id="output_canvas"></canvas>
-    
-    <div class="guide-overlay" id="guide-box">
-        <svg class="hand-svg" viewBox="0 0 200 250">
-            <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
-        </svg>
-        <p style="text-align:center; font-size: 1.5rem; font-weight: 900; margin-top: 20px; color: white; text-shadow: 2px 2px 10px black; text-transform: uppercase; letter-spacing: 1px;">FULL RIGHT HAND</p>
-    </div>
+<div class="container" id="main-container">
+    <div class="card">
+        
+        <!-- VERIFY -->
+        <div id="stage-verify" class="step active">
+            <h1 style="margin:0 0 0.5rem 0; color: var(--primary); font-size: 2.2rem; font-weight: 900;">Identity Verification</h1>
+            <p style="color: #64748b; font-weight: 700; font-size: 1.1rem; margin-bottom: 2rem;">Enter Employee Code to start</p>
+            
+            <div style="text-align: left;">
+                <label style="font-weight: 800; color: #64748b; font-size: 0.85rem; text-transform: uppercase; margin-left: 5px;">Employee Code</label>
+                <input type="text" id="emp-code" placeholder="Ex: 1234" autofocus>
+            </div>
 
-    <div class="controls">
-        <div class="instruction" id="instruction-text">Initializing Camera...</div>
-        <button id="capture-btn" class="btn-capture" disabled title="Align hand to capture">
-            <div style="width: 75px; height: 75px; border-radius: 50%; background: white; box-shadow: inset 0 0 15px rgba(0,0,0,0.2);"></div>
-        </button>
+            <button class="btn" id="start-btn" onclick="startModule()">
+                <span>Open Camera</span>
+            </button>
+        </div>
+
+        <!-- CAPTURE -->
+        <div id="stage-capture" class="step">
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: flex-start;">
+                    <button class="btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;" onclick="resetToModal()">⬅️ BACK</button>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 24px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1); text-align: center;">
+                    <span style="display: block; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Registering Employee</span>
+                    <p id="emp-name-display" style="margin:0; font-weight: 900; font-size: 1.8rem; color: var(--primary); line-height: 1.2;"></p>
+                </div>
+            </div>
+
+            <div class="instruction" id="instruction-text">Align Hand...</div>
+
+            <div id="camera-wrap">
+                <video id="input_video" playsinline></video>
+                <canvas id="output_canvas"></canvas>
+                
+                <div class="guide-overlay" id="guide-box">
+                    <svg class="hand-svg" viewBox="0 0 200 250">
+                        <path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" />
+                    </svg>
+                    <p style="color:white; font-weight:900; font-size: 1.1rem; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,1); text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">Align Full Right Hand</p>
+                </div>
+            </div>
+
+            <button id="capture-btn" class="btn-capture" disabled>
+                <div style="width: 70px; height: 70px; border-radius: 50%; background: white;"></div>
+            </button>
+        </div>
+
     </div>
 </div>
 
@@ -158,40 +204,42 @@
     const captureBtn = document.getElementById('capture-btn');
     const statusToast = document.getElementById('status-toast');
     const nameDisplay = document.getElementById('emp-name-display');
-    const backBtn = document.getElementById('global-back-btn');
+    const container = document.getElementById('main-container');
 
     let employeeCode = "";
     let isReady = false;
     let cameraActive = false;
     let activeCameraInstance = null;
 
+    function showStage(stage) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById(`stage-${stage}`).classList.add('active');
+        if (stage === 'capture') container.classList.add('wide');
+        else container.classList.remove('wide');
+    }
+
     async function startModule() {
         const input = document.getElementById('emp-code');
-        const btn = document.getElementById('start-camera-btn');
+        const btn = document.getElementById('start-btn');
         employeeCode = input.value.trim().toUpperCase();
         if (!employeeCode) return alert("Please enter employee code.");
         
         try {
             btn.disabled = true;
-            btn.textContent = "VERIFYING...";
             const res = await fetch(`/api/employee/${employeeCode}`);
             const result = await res.json();
             
             if (result.success) {
                 nameDisplay.textContent = `👤 ${result.data.Name}`;
-                nameDisplay.style.display = 'block';
-                backBtn.style.display = 'flex';
-                document.getElementById('emp-modal').style.display = 'none';
-                instruction.textContent = "Opening Camera...";
+                showStage('capture');
                 initCamera();
             } else {
-                alert("Employee not found! Please check the code.");
+                alert("Employee not found!");
             }
         } catch (err) {
-            alert("Connection error. Try again.");
+            alert("Connection error.");
         } finally {
             btn.disabled = false;
-            btn.textContent = "OPEN CAMERA";
         }
     }
 
@@ -201,10 +249,7 @@
             activeCameraInstance = null;
         }
         cameraActive = false;
-        document.getElementById('emp-modal').style.display = 'flex';
-        nameDisplay.style.display = 'none';
-        backBtn.style.display = 'none';
-        document.getElementById('emp-code').focus();
+        showStage('verify');
     }
 
     function showToast(msg, type) {
