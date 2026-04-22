@@ -33,26 +33,19 @@
         .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
         .btn-capture.ready { background: var(--success); transform: scale(1.02); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
         input { width: 100%; padding: 1.2rem; margin-bottom: 1.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.8rem; text-align: center; font-weight: 900; box-sizing: border-box; color: var(--primary); }
-        #camera-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #000; margin-bottom: 1rem; border: 4px solid #cbd5e1; aspect-ratio: 4/3; flex: 1; min-height: 0; }
+        #camera-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #000; margin-bottom: 1rem; border: 4px solid #cbd5e1; aspect-ratio: 4/3; flex: 1; min-height: 0; transition: border-color 0.3s; }
         #camera-wrap.valid { border-color: var(--success); }
-        #camera-wrap.partial { border-color: var(--warning); }
         #camera-wrap.invalid { border-color: var(--invalid); }
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); pointer-events: none; }
-        
-        /* Person Outline Silhouette */
         .silhouette-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 85%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; transition: all 0.3s; }
         .valid .silhouette-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.05); }
-
-        /* Palm Guide */
-        .palm-guide-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 80%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; display:none; }
-        .active .palm-guide-svg { display: block; }
-        .valid .palm-guide-svg { stroke: var(--success); stroke-width: 4; fill: rgba(16, 185, 129, 0.05); }
-
+        .palm-guide-svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60%; height: 80%; fill: rgba(255,255,255,0.1); stroke: rgba(255,255,255,0.4); stroke-width: 2; pointer-events: none; z-index: 10; }
+        .valid .palm-guide-svg { stroke: var(--success); stroke-width: 4; }
         .instruction-box { background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; width: 85%; z-index: 20; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); }
         .name-card { background: white; padding: 1rem; border-radius: 18px; border: 2px solid var(--accent); margin-bottom: 1rem; flex-shrink: 0; }
         .name-card span { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
-        .name-card p { margin: 0; font-weight: 900; font-size: 1.4rem; color: var(--primary); line-height: 1.1; }
+        .name-card p { margin: 0; font-weight: 900; font-size: 1.6rem; color: var(--primary); line-height: 1.1; }
         .progress-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-shrink: 0; }
         .progress-dot { flex: 1; height: 5px; background: #e2e8f0; border-radius: 10px; }
         .progress-dot.active { background: var(--accent); }
@@ -83,7 +76,7 @@
             <div id="stage-face" class="step">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
                 <div class="name-card"><span>Registering Employee / કર્મચારી</span><p id="face-user-name"></p></div>
-                <div id="camera-wrap" class="camera-container"><video id="face-video" autoplay playsinline></video><canvas id="face-canvas"></canvas>
+                <div id="camera-wrap"><video id="face-video" autoplay playsinline></video><canvas id="face-canvas"></canvas>
                     <svg class="silhouette-svg" viewBox="0 0 100 100"><path d="M50 10 C40 10 35 20 35 30 C35 40 40 50 50 50 C60 50 65 40 65 30 C65 20 60 10 50 10 Z M20 90 C20 70 30 60 50 60 C70 60 80 70 80 90" fill="none" /></svg>
                     <div class="instruction-box" id="face-instr">Initializing AI...</div>
                 </div>
@@ -92,8 +85,8 @@
             <div id="stage-palm" class="step">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;"><button id="palm-back-btn" class="btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.8rem; background: #f1f5f9; color: #475569;" onclick="goBack()">⬅️ BACK</button></div>
                 <div class="name-card"><span>Registering Employee / કર્મચારી</span><p id="palm-user-name"></p></div>
-                <div id="camera-wrap" class="active"><div id="auto-capture-status" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">STABILIZING...</div><video id="palm-video" autoplay playsinline></video><canvas id="palm-canvas"></canvas>
-                    <svg class="silhouette-svg palm-guide-svg" viewBox="0 0 200 250"><path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" fill="none" /></svg>
+                <div id="camera-wrap"><div id="auto-capture-status" style="background:var(--success); color:white; position:absolute; top:10px; left:50%; transform:translateX(-50%); padding:5px 15px; border-radius:20px; font-weight:800; display:none; z-index:30;">સ્થિર કરો... STABILIZING...</div><video id="palm-video" autoplay playsinline></video><canvas id="palm-canvas"></canvas>
+                    <svg class="palm-guide-svg" viewBox="0 0 200 250"><path d="M45,180 C35,160 30,140 30,135 C30,120 45,115 55,130 L65,145 L65,70 C65,55 75,50 82,55 C90,60 90,70 90,85 L90,145 L90,60 C90,45 100,40 108,45 C115,50 115,60 115,75 L115,145 L115,65 C115,50 125,45 133,50 C140,55 140,65 140,80 L140,145 L140,85 C140,70 150,65 158,70 C165,75 165,85 165,100 L165,160 C165,200 150,230 110,240 L80,240 C55,240 45,210 45,180 Z" fill="none" /></svg>
                     <div class="instruction-box" id="palm-instr">Show Right Hand / હાથ બતાવો</div>
                 </div>
                 <button id="palm-capture-btn" class="btn btn-capture" disabled><span>તૈયાર / READY 🖐️</span></button>
@@ -104,7 +97,7 @@
         </div>
     </div>
     <script>
-        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false;
+        let currentMode = "FACE", currentStage = "VERIFY", employeeCode = "", employeeName = "", stream = null, activeCamera = null, faceReady = false, palmReady = false, autoCaptureTimer = null;
         const faceMesh = new FaceMesh({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
         faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
         faceMesh.onResults(onFaceResults);
@@ -121,24 +114,30 @@
             const yaw = Math.abs(lm[1].x - (lm[33].x + lm[263].x) / 2) * 100;
             const roll = Math.abs(lm[33].y - lm[263].y) * 100;
             const eyes = (lm[145].y - lm[159].y < 0.012) || (lm[374].y - lm[386].y < 0.012);
-            if (yaw > 5 || roll > 5) { instr.textContent = "Keep Face Straight"; wrap.className = "partial"; }
-            else if (eyes) { instr.textContent = "Keep Eyes Open"; }
-            else { faceReady = true; instr.textContent = "Perfect! Hold Still"; wrap.className = "valid"; btn.classList.add('ready'); }
+            if (yaw > 5 || roll > 5) { instr.textContent = "Keep Face Straight / ચહેરો સીધો રાખો"; wrap.className = "invalid"; }
+            else if (eyes) { instr.textContent = "Keep Eyes Open / આંખો ખુલ્લી રાખો"; }
+            else { faceReady = true; instr.textContent = "Perfect! Hold Still / બરાબર છે, સ્થિર રહો"; wrap.className = "valid"; btn.classList.add('ready'); }
             btn.disabled = !faceReady;
         }
 
         function onPalmResults(results) {
             if (currentStage !== "PALM") return;
             const wrap = document.getElementById('stage-palm').querySelector('#camera-wrap'), instr = document.getElementById('palm-instr'), btn = document.getElementById('palm-capture-btn');
-            const canvas = document.getElementById('palm-canvas'), ctx = canvas.getContext('2d');
-            ctx.clearRect(0,0,canvas.width,canvas.height); palmReady = false; wrap.classList.remove('valid');
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                if (results.multiHandedness[0].label === "Left") {
-                    palmReady = true; wrap.classList.add('valid'); instr.textContent = "READY TO CAPTURE";
-                    drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color:'#10b981', lineWidth:3});
-                }
-            } else { instr.textContent = "Show Right Hand"; }
-            btn.disabled = !palmReady; if(palmReady) btn.classList.add('ready'); else btn.classList.remove('ready');
+            const canvas = document.getElementById('palm-canvas'), ctx = canvas.getContext('2d'), autoStatus = document.getElementById('auto-capture-status');
+            ctx.clearRect(0,0,canvas.width,canvas.height); 
+            let detected = false;
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0 && results.multiHandedness[0].label === "Left") {
+                detected = true;
+                drawConnectors(ctx, results.multiHandLandmarks[0], HAND_CONNECTIONS, {color:'#10b981', lineWidth:3});
+            }
+            if (detected && !palmReady) {
+                palmReady = true; wrap.className = "valid"; instr.textContent = "Hold Still / સ્થિર રહો"; autoStatus.style.display = 'block';
+                if (!autoCaptureTimer) autoCaptureTimer = setTimeout(() => { if (palmReady) triggerPalmCapture(); }, 1500);
+            } else if (!detected && palmReady) {
+                palmReady = false; wrap.className = "invalid"; instr.textContent = "Show Right Hand / હાથ બતાવો"; autoStatus.style.display = 'none';
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+            }
+            btn.disabled = !palmReady;
         }
 
         async function startCamera(isPalm = false) {
@@ -152,7 +151,7 @@
             } catch (e) { alert("Camera Error"); }
         }
 
-        function stopCamera() { if (activeCamera) { activeCamera.stop(); activeCamera = null; } if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
+        function stopCamera() { if (activeCamera) { activeCamera.stop(); activeCamera = null; } if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } if(autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; } }
         function goBack() { stopCamera(); showStage("VERIFY"); }
         function showStage(s) {
             currentStage = s.toUpperCase();
@@ -186,6 +185,14 @@
             } else alert("Invalid Code");
         };
 
+        async function triggerPalmCapture() {
+            const vid = document.getElementById('palm-video'), can = document.createElement('canvas');
+            can.width = vid.videoWidth; can.height = vid.videoHeight;
+            const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
+            const res = await fetch('/api/palm/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg',0.85)}) });
+            if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
+        }
+
         document.getElementById('face-capture-btn').onclick = async () => {
             if (!faceReady) return;
             const vid = document.getElementById('face-video'), can = document.createElement('canvas');
@@ -193,19 +200,12 @@
             const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
             const res = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg', 0.9)}) });
             if ((await res.json()).success) {
-                if (currentMode === "BOTH") { document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
+                if (currentMode === "BOTH") { stopCamera(); document.getElementById('palm-user-name').textContent = employeeName; showStage("PALM"); startCamera(true); }
                 else { stopCamera(); showStage("THANKS"); }
             }
         };
 
-        document.getElementById('palm-capture-btn').onclick = async () => {
-            if (!palmReady) return;
-            const vid = document.getElementById('palm-video'), can = document.createElement('canvas');
-            can.width = vid.videoWidth; can.height = vid.videoHeight;
-            const ctx = can.getContext('2d'); ctx.translate(can.width,0); ctx.scale(-1,1); ctx.drawImage(vid,0,0);
-            const res = await fetch('/api/palm/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ empCode:employeeCode, image:can.toDataURL('image/jpeg',0.85)}) });
-            if ((await res.json()).success) { stopCamera(); showStage("THANKS"); }
-        };
+        document.getElementById('palm-capture-btn').onclick = triggerPalmCapture;
 
         fetch('/api/config/registration-mode').then(r=>r.json()).then(d=>{ if(d.success) currentMode = d.mode; updateProgress(); updateStageLabels(); });
         if (typeof io !== 'undefined') { io().on('config_updated', (d) => { currentMode = d.mode; updateProgress(); updateStageLabels(); }); }
